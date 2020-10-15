@@ -37,3 +37,10 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# ignore macosx
+.DS_Store
+
+# ignore raw data (unzipped)
+/data/2020-10-07_CA_ffm_obs/
+/data/2019-07-27_CA_ffm_obs/
