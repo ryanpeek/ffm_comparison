@@ -1,16 +1,424 @@
 ---
-title: "ffm_comparison"
-output: html_document
+title: "FFM Comparison"
+author: "R. Peek"
+date: "Updated `r format(Sys.time(), '%Y-%m-%d %H:%M')`"
+output:
+  bookdown::html_document2:
+    theme: cosmo
+    number_sections: false
+    highlight: textmate
+    toc: true
+    toc_float:
+        collapsed: true
+    code_fold: hide
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 source("R/packages.R")
+source("R/combine_data.R")
+source("R/plot_summarize.R")
 ```
 
-## FFM Comparison
-
 To better understand how metrics have changed between previous iterations of the Functional Flow Calculator, here are some comparison plots across stream class and metric. 
+
+<br>
+
+## Summarizing Old Vs New 
+
+1. I pulled all the stream class data in from the raw stream `Class` folders using this code to read, tidy, and clean all the data and get it into one single file:
+
+ - [`get_data.R`](https://raw.githubusercontent.com/ryanpeek/ffm_comparison/main/R/get_data.R)
+ 
+2. I then combined each "version" (2019 and 2020) of the data using this code:
+
+ - [`combine_data.R`](https://raw.githubusercontent.com/ryanpeek/ffm_comparison/main/R/combine_data.R)
+ 
+3. Once we have a single file with all the data, we can evaluate, plot, and summarize as we like.
+
+ - [`plot_summarize.R`](https://raw.githubusercontent.com/ryanpeek/ffm_comparison/main/R/plot_summarize.R)
+ 
+### Basic Workflow
+ 
+```{r workflow, eval=F, echo=T}
+# PACKAGES
+source("R/packages.R")
+
+# FUNCTION TO GET DATA FROM RAW SOURCE AND TIDY
+source("R/get_data.R")
+
+# use returndata=TRUE to return raw tidied data to global environment
+get_data(2019, returndata = FALSE)
+get_data(2020, returndata = FALSE)
+
+# FUNCTION TO COMBINE VERSIONS (2019 and 2020) INTO SINGLE DATAFRAME
+source("R/combine_data.R") # automatically loads data
+
+# PLOT/SUMMARIZE
+source("R/plot_summarize.R")
+
+# get table for stream class and flow Chx
+# flow chx: "Timing" "Magnitude" "Duration" "Rate of change" "Frequency"
+flow_chx_dt(flow_characteristic="Magnitude") # pass a stream class to the function
+plot_flow_chx(stream_class = "Class-1", flow_characteristic="Magnitude")
+
+```
+
+
+There are 9 stream classes, and 5 stream characteristics (**Timing, Magnitude, Duration, Rate of Change and Frequency**).
+
+<br>
+
+## Magnitude
+
+If we look at Magnitude metrics for all Stream classes, and compare each side by side, we can quickly see which metrics are identical and which have changed. This is the **mean value** for FFM by stream class and flow metric across all gages within that stream class.
+
+Changed: 
+
+ - **Peak_2**
+ - **Peak_5**
+
+```{r, echo=F, eval=T, message=FALSE, warning=FALSE}
+combine_data()
+flow_chx_dt(flow_characteristic = "Magnitude")
+
+```
+
+### Stream Class-1
+
+If we look at Stream Class-1 for Magnitude and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-1", "Magnitude")
+
+```
+
+### Stream Class-2
+
+If we look at Stream Class-2 for Magnitude and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-2", "Magnitude")
+
+```
+
+### Stream Class-3
+
+If we look at Stream Class-3 for Magnitude and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-3", "Magnitude")
+
+```
+
+### Stream Class-4
+
+If we look at Stream Class-4 for Magnitude and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-4", "Magnitude")
+
+```
+
+### Stream Class-5
+
+If we look at Stream Class-5 for Magnitude and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-5", "Magnitude")
+
+```
+
+### Stream Class-6
+
+If we look at Stream Class-6 for Magnitude and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-6", "Magnitude")
+
+```
+
+### Stream Class-7
+
+If we look at Stream Class-7 for Magnitude and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-7", "Magnitude")
+
+```
+
+### Stream Class-8
+
+If we look at Stream Class-8 for Magnitude and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-8", "Magnitude")
+
+```
+
+### Stream Class-9
+
+If we look at Stream Class-9 for Magnitude and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-9", "Magnitude")
+
+```
+
+
+
+
+<br>
+
+## Timing
+
+If we look at Timing metrics for all Stream classes, and compare each side by side, we can quickly see there are **NO DIFFERENCES**.
+
+```{r, echo=F, eval=T, message=FALSE, warning=FALSE}
+combine_data()
+flow_chx_dt(flow_characteristic = "Timing")
+
+```
+
+<br>
+
+## Duration
+
+If we look at Duration metrics for all Stream classes, and compare each side by side, we can quickly see which metrics are identical and which have changed. This is the **mean value** for FFM by stream class and flow metric across all gages within that stream class.
+
+Changed: 
+
+ - **Peak_Dur_2**
+ - **Peak_Dur_5**
+
+```{r, echo=F, eval=T, message=FALSE, warning=FALSE}
+combine_data()
+flow_chx_dt(flow_characteristic = "Duration")
+
+```
+
+### Stream Class-1
+
+If we look at Stream Class-1 for Duration and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-1", "Duration")
+
+```
+
+### Stream Class-2
+
+If we look at Stream Class-2 for Duration and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-2", "Duration")
+
+```
+
+### Stream Class-3
+
+If we look at Stream Class-3 for Duration and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-3", "Duration")
+
+```
+
+### Stream Class-4
+
+If we look at Stream Class-4 for Duration and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-4", "Duration")
+
+```
+
+### Stream Class-5
+
+If we look at Stream Class-5 for Duration and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-5", "Duration")
+
+```
+
+### Stream Class-6
+
+If we look at Stream Class-6 for Duration and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-6", "Duration")
+
+```
+
+### Stream Class-7
+
+If we look at Stream Class-7 for Duration and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-7", "Duration")
+
+```
+
+### Stream Class-8
+
+If we look at Stream Class-8 for Duration and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-8", "Duration")
+
+```
+
+### Stream Class-9
+
+If we look at Stream Class-9 for Duration and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-9", "Duration")
+
+```
+
+
+
+
+<br>
+
+## Rate of Change
+
+If we look at Rate of change metrics for all Stream classes, and compare each side by side, we can quickly see there are **NO DIFFERENCES**.
+
+```{r, echo=F, eval=T, message=FALSE, warning=FALSE}
+combine_data()
+flow_chx_dt(flow_characteristic = "Rate of change")
+
+```
+
+<br>
+
+## Frequency
+
+If we look at Frequency metrics for all Stream classes, and compare each side by side, we can quickly see which metrics are identical and which have changed. This is the **mean value** for FFM by stream class and flow metric across all gages within that stream class.
+
+Changed: 
+
+ - **Peak_Fre_2**
+ - **Peak_Fre_5**
+
+```{r, echo=F, eval=T, message=FALSE, warning=FALSE}
+combine_data()
+flow_chx_dt(flow_characteristic = "Frequency")
+
+```
+
+### Stream Class-1
+
+If we look at Stream Class-1 for Frequency and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-1", "Frequency")
+
+```
+
+### Stream Class-2
+
+If we look at Stream Class-2 for Frequency and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-2", "Frequency")
+
+```
+
+### Stream Class-3
+
+If we look at Stream Class-3 for Frequency and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-3", "Frequency")
+
+```
+
+### Stream Class-4
+
+If we look at Stream Class-4 for Frequency and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-4", "Frequency")
+
+```
+
+### Stream Class-5
+
+If we look at Stream Class-5 for Frequency and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-5", "Frequency")
+
+```
+
+### Stream Class-6
+
+If we look at Stream Class-6 for Frequency and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-6", "Frequency")
+
+```
+
+### Stream Class-7
+
+If we look at Stream Class-7 for Frequency and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-7", "Frequency")
+
+```
+
+### Stream Class-8
+
+If we look at Stream Class-8 for Frequency and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-8", "Frequency")
+
+```
+
+### Stream Class-9
+
+If we look at Stream Class-9 for Frequency and visualize these data (so combine across gages within a stream class):
+
+```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
+
+plot_flow_chx("Class-9", "Frequency")
+
+```
+
+
 
 ## Resources & Websites {.tabset .tabset-fade .tabset-pills}
 
@@ -33,9 +441,3 @@ This is an R package that essentially uses the underlying code from the **eflows
  - [R ffc package](https://github.com/ceff-tech/ffc_api_client)
 
 <br>
-
-## Summarizing Old Vs New {-}
-
-I pulled all the stream class data in from the raw stream `Class` folders using this code:
-
- - 

@@ -20,6 +20,9 @@
 # RStudio files
 .Rproj.user/
 
+# knitted docs
+*.html
+
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf

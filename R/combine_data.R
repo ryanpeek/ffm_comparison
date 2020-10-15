@@ -27,7 +27,7 @@ combine_data <- function(){
     print("Already exists!")
     load(glue("{here::here()}/output/ffm_combined_tidy.rda"))
     print("Data loaded into local environment")
-    return(df_all)
+    assign(x = "df_all", value = get("df_all"), envir = .GlobalEnv)
     }
 }
 
