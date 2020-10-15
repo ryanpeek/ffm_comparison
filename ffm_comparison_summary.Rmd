@@ -1,0 +1,41 @@
+---
+title: "ffm_comparison"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+source("R/packages.R")
+```
+
+## FFM Comparison
+
+To better understand how metrics have changed between previous iterations of the Functional Flow Calculator, here are some comparison plots across stream class and metric. 
+
+## Resources & Websites {.tabset .tabset-fade .tabset-pills}
+
+### Python FFC
+
+The original python repository where the current up-to-date version of the FF calculator:
+
+ - [FFC On Github](https://github.com/leogoesger/func-flow)
+ 
+### Eflows Website
+
+The [eflows.ucdavis.edu](https://eflows.ucdavis.edu) website uses the python code to generate functional flow metrics. This is the visual "GUI" that many folks are using currently.
+
+ - [eflows.ucdavis.edu](https://eflows.ucdavis.edu)
+
+### R API Wrapper
+
+This is an R package that essentially uses the underlying code from the **eflows website** to calculate FFM in R.
+
+ - [R ffc package](https://github.com/ceff-tech/ffc_api_client)
+
+<br>
+
+## Summarizing Old Vs New {-}
+
+I pulled all the stream class data in from the raw stream `Class` folders using this code:
+
+ - 
