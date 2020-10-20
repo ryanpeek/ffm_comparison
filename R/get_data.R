@@ -29,7 +29,7 @@ get_data <- function(ffc_version, returndata=FALSE) {
   csv_files <- dir(path = basefolder, pattern='*.csv$', recursive = T)
 
   # READ IN AND CONVERT TO LONG FORMAT
-  if(!fs::file_exists(glue("output/{fs::path_file(basefolder)}_tidy_df.rda"))){
+  if(!fs::file_exists(glue("output/{fs::path_file(basefolder)}_tidy_df.fst")) | !fs::file_exists(glue("output/{fs::path_file(basefolder)}_tidy_df.rda"))){
 
     # create a dataframe to map data into
     dat_long <- tibble(filename = csv_files, version=ffc_version) %>%
@@ -73,7 +73,9 @@ get_data <- function(ffc_version, returndata=FALSE) {
     #write_csv(df_trim, file = glue("{here::here()}/output/{fs::path_file(basefolder)}_tidy_df.csv.gz"))
 
     # write a compressed .RData version
-    save(list=glue("v{ffc_version}"), file = glue("{here::here()}/output/{fs::path_file(basefolder)}_tidy_df.rda"))
+    save(list = glue("v{ffc_version}"), file = glue("{here::here()}/output/{fs::path_file(basefolder)}_tidy_df.rda"))
+    # write a compressed .fst version
+    fst::write_fst(x=get(glue("v{ffc_version}")), path = glue("{here::here()}/output/{fs::path_file(basefolder)}_tidy_df.fst"), compress=100)
 
     # return
     print("Data loaded into local environment")
@@ -81,9 +83,13 @@ get_data <- function(ffc_version, returndata=FALSE) {
   else{
     print("Already updated")
     if(returndata==TRUE){
-      load(glue("{here::here()}/output/{fs::path_file(basefolder)}_tidy_df.rda"))
+      # with fst
+      dat <- fst::read_fst(path = glue("{here::here()}/output/{fs::path_file(basefolder)}_tidy_df.fst"))
+      # with rda
+      #load(file = glue("{here::here()}/output/{fs::path_file(basefolder)}_tidy_df.rda"))
       print("Data loaded into local environment")
-      assign(x = glue("v{ffc_version}"), value = get(glue("v{ffc_version}")), envir = .GlobalEnv)
+      assign(x = glue("v{ffc_version}"), value = dat, envir = .GlobalEnv)
+      #assign(x = glue("v{ffc_version}"), value = get(glue("v{ffc_version}")), envir = .GlobalEnv)
     }
   }
 }

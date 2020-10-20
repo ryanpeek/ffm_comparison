@@ -1,0 +1,422 @@
+---
+title: "FFM for MF Feather"
+author: "R. Peek"
+date: "Updated `r format(Sys.time(), '%Y-%m-%d %H:%M')`"
+output:
+  bookdown::html_document2:
+    theme: cosmo
+    number_sections: false
+    highlight: textmate
+    toc: true
+    toc_float:
+        collapsed: true
+    code_fold: hide
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+source("R/packages.R")
+source("R/combine_data.R")
+source("R/plot_summarize.R")
+combine_data()
+
+```
+
+Zooming in to a single gage: MF Feather 11394500
+
+<br>
+
+## Gages of Interest
+
+Pull the data and summarize specifically for the gages of interest: 
+
+ - MFF Gage 11394500
+ - Forest Creek nr Wilseyville, 11316800
+ - Merced R at Happy Isles, 11264500
+ - SF Trinity River Blw Hampton, 11528700
+ - *NF American NF Dam, 11427000* (not in reference set)
+ - *Indian Creek nr Crescent Mills, 11401500* (not in reference set)
+
+
+### Data eflows.ucdavis.edu
+
+Get data directly from website.
+
+```{r eflowsFFMdata, eval=T, echo=T}
+
+gages_oi <- c(11394500, 11528700, 11264500, 11316800)
+
+get_ffm_web <- function(gageid){
+  gage <- gageid
+  web_ffm <- read_csv(file = glue("https://s3-us-west-1.amazonaws.com/funcflow/annual_flow_result_24/{gage}_annual_result_matrix.csv")) %>% 
+  pivot_longer(cols=!Year, names_to="year", values_to="value") %>% 
+  mutate(gage_id=gage,
+         year = as.integer(year)) %>% 
+  rename(ffm=Year) # fix funky matrix remnant name
+  assign(x = glue("web_ffm_{gage}"), value = get("web_ffm"), envir = .GlobalEnv)
+}
+
+get_flow_web <- function(gageid){
+  gage <- gageid
+  web_flow <- read_csv(file=glue("https://s3-us-west-1.amazonaws.com/funcflow/annual_flow_matrix/{gage}.csv")) %>%
+  mutate(gage_id=gage) %>% rowid_to_column(var = "wyday") %>%  
+  pivot_longer(cols=!c(gage_id, wyday), names_to="year", values_to="Q") %>% 
+  mutate(year=as.integer(year)) %>% 
+  arrange(year, wyday)
+  assign(x = glue("web_flow_{gage}"), value = get("web_flow"), envir = .GlobalEnv)
+}
+
+# get water year day conversions
+wtr_yr_conversions <- read_csv("https://funcflow.s3-us-west-1.amazonaws.com/resources/Day_of_year_conversions.csv", skip=1) %>%  select(-X4) %>% clean_names() %>% filter(!is.na(calendar_day_1))
+
+
+# now get ffm:
+get_ffm_web(gages_oi[1])
+get_ffm_web(gages_oi[2])
+get_ffm_web(gages_oi[3])
+get_ffm_web(gages_oi[4])
+
+web_ffm <- bind_rows(mget(ls(pattern = "web_ffm")))
+
+# now get flow
+get_flow_web(gages_oi[1])
+get_flow_web(gages_oi[2])
+get_flow_web(gages_oi[3])
+get_flow_web(gages_oi[4])
+
+web_flow <- bind_rows(mget(ls(pattern = "web_flow"))) %>% 
+  left_join(wtr_yr_conversions[,c(1,2,3,4,6)], by=c("wyday"="water_year_day"))
+
+
+```
+
+Plot
+
+```{r}
+
+ggplot() + geom_line(data=web_flow, aes(x=wyday, y=Q, color=as.factor(gage_id), group=as.factor(gage_id))) + 
+  facet_wrap(~gage_id, scales = "free_y")
+
+```
+
+
+### FFM from Python
+
+This is the most recent data from Noelle (2020-10-07).
+
+```{r}
+
+combine_data()
+
+ffm_git <- filter(df_all,  gage_id %in% gages_oi, ffc_version=="2020")
+ffm_old <- filter(df_all,  gage_id %in% gages_oi, ffc_version=="2019")
+
+# pull a list of the flow_component stuff for merging
+ffc_components <- df_all %>% select(ffm, flow_component:flow_metric_description) %>% distinct()
+
+```
+
+### Compare FFM
+
+**From eflows.ucdavis.edu**
+
+```{r, message=FALSE, warning=FALSE}
+# check same number of years in each
+#ffm_web %>% group_by(ffm, gage_id) %>% tally() %>% View(title="ffm_web")
+
+#ffm_git %>% group_by(ffm, gage_id, ffc_version) %>% tally() %>% View(title = "ffm_git")
+
+web_ffm <- web_ffm %>% left_join(ffc_components, by="ffm")
+
+# flow chx
+flow_chx <- "Peak flow"
+
+# FFM WEB
+web_ffm %>% filter(flow_component==flow_chx) %>% group_by(ffm, gage_id) %>% 
+  summarize(mean=mean(value, na.rm=TRUE))
+
+# FFM GIT
+ffm_git %>% filter(flow_component==flow_chx) %>% group_by(ffm, gage_id) %>% 
+  summarize(mean=mean(value, na.rm=TRUE))
+ffm_old %>% filter(flow_component==flow_chx) %>% group_by(ffm, gage_id) %>% 
+  summarize(mean=mean(value, na.rm=TRUE))
+
+```
+
+
+## Calculate Exceedances
+
+We'll use some of `dataRetrieval`'s functionality here.
+
+```{r eval=F}
+
+library(dataRetrieval)
+library(xts)
+
+# try one site:
+merc <- 11264500
+
+mercPeak <- readNWISpeak(siteNumbers = merc)
+
+### Split the downloaded data into two periods
+bb30_20<-subset(mercPeak,
+               peak_dt>="1930-10-01"
+               &peak_dt<="2020-09-30")
+bb51_20<-subset(mercPeak,
+                peak_dt>="1951-10-01"
+                &peak_dt<="2020-09-30")
+
+
+Q = bb30_20$peak_va  
+graphlab = "1930-2020"
+
+#Generate plotting positions
+n = length(Q)
+r = n + 1 - rank(Q)  # highest Q has rank r = 1
+T = (n + 1)/r
+
+# Set up x axis tick positions and labels
+Ttick = c(1.001,1.01,1.1,1.5,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,30,35,40,45,50,60,70,80,90,100)
+xtlab = c(1.001,1.01,1.1,1.5,2,NA,NA,5,NA,NA,NA,NA,10,NA,NA,NA,NA,15,NA,NA,NA,NA,20,NA,30,NA,NA,NA,50,NA,NA,NA,NA,100)
+y = -log(-log(1 - 1/T))
+ytick = -log(-log(1 - 1/Ttick))
+xmin = min(min(y),min(ytick))
+xmax = max(ytick)
+
+# Fit a line by method of moments, along with 95% confidence intervals
+KTtick = -(sqrt(6)/pi)*(0.5772 + log(log(Ttick/(Ttick-1))))
+QTtick = mean(Q) + KTtick*sd(Q) 
+nQ = length(Q)
+se = (sd(Q)*sqrt((1+1.14*KTtick + 1.1*KTtick^2)))/sqrt(nQ) 
+LB = QTtick - qt(0.975, nQ - 1)*se
+UB = QTtick + qt(0.975, nQ - 1)*se
+max = max(UB)
+Qmax = max(QTtick)
+
+par(mfrow=c(1,2))
+
+# Plot peak flow series with Gumbel axis
+plot(y, Q,
+     ylab = expression( "Annual Peak Flow (cfs)" ) ,
+     xaxt = "n", xlab = "Return Period, T (year)",
+     ylim = c(0, Qmax),
+     xlim = c(xmin, xmax),
+     pch = 21, bg = "red",
+     main = glue("Merced:{merc}, {graphlab}")
+)  
+par(cex = 0.65)
+axis(1, at = ytick, labels = as.character(xtlab))
+
+# Add fitted line and confidence limits
+lines(ytick, QTtick, col = "black", lty=1, lwd=2)  
+lines(ytick, LB, col = "blue", lty = 1, lwd=1.5)
+lines(ytick, UB, col = "red", lty = 1, lwd=1.5)  
+
+# Draw grid lines
+abline(v = ytick, lty = 3, col="light gray")             
+abline(h = seq(500, floor(Qmax), 500), lty = 3,col="light gray") 
+abline(v=50/100, col="darkgreen", lty=2)
+par(cex = 1)
+
+
+Q = bb51_20$peak_va   
+graphlab = "1951-2020"
+
+#Generate plotting positions
+n = length(Q)
+r = n + 1 - rank(Q)  # highest Q has rank r = 1
+T = (n + 1)/r
+
+# Set up x axis tick positions and labels
+Ttick = c(1.001,1.01,1.1,1.5,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,30,35,40,45,50,60,70,80,90,100)
+xtlab = c(1.001,1.01,1.1,1.5,2,NA,NA,5,NA,NA,NA,NA,10,NA,NA,NA,NA,15,NA,NA,NA,NA,20,NA,30,NA,NA,NA,50,NA,NA,NA,NA,100)
+y = -log(-log(1 - 1/T))
+ytick = -log(-log(1 - 1/Ttick))
+xmin = min(min(y),min(ytick))
+xmax = max(ytick)
+
+# Fit a line by method of moments, along with 95% confidence intervals
+KTtick = -(sqrt(6)/pi)*(0.5772 + log(log(Ttick/(Ttick-1))))
+QTtick = mean(Q) + KTtick*sd(Q) 
+nQ = length(Q)
+se = (sd(Q)*sqrt((1+1.14*KTtick + 1.1*KTtick^2)))/sqrt(nQ) 
+LB = QTtick - qt(0.975, nQ - 1)*se
+UB = QTtick + qt(0.975, nQ - 1)*se
+max = max(UB)
+Qmax = max(QTtick)
+
+# Plot peak flow series with Gumbel axis
+plot(y, Q,
+     ylab = expression( "Annual Peak Flow (cfs)" ) ,
+     xaxt = "n", xlab = "Return Period, T (year)",
+     ylim = c(0, Qmax),
+     xlim = c(xmin, xmax),
+     pch = 21, bg = "red",
+     main = glue("Merced:{merc}, {graphlab}")
+)  
+par(cex = 0.65)
+axis(1, at = ytick, labels = as.character(xtlab))
+
+# Add fitted line and confidence limits
+lines(ytick, QTtick, col = "black", lty=1, lwd=2)  
+lines(ytick, LB, col = "blue", lty = 1, lwd=1.5)
+lines(ytick, UB, col = "red", lty = 1, lwd=1.5)  
+
+# Draw grid lines
+abline(v = ytick, lty = 3, col="light gray")             
+abline(h = seq(500, floor(Qmax), 500), lty = 3,col="light gray") 
+par(cex = 1)
+
+
+
+```
+
+
+```{r eval=F}
+#Re-loading discharges removing NA values
+flows <- web_flow %>% filter(gage_id==merc) %>% select(Q, year, calendar_day) %>% 
+  mutate(date = ydm(glue("{year}-{calendar_day}"))) %>% 
+  filter(!is.na(date))
+
+flow<-filter(flows, !is.na(Q))
+
+#Sorting discharges in decreasing order
+flow<-flow %>% arrange(desc(Q))
+
+#Creating df with X as percent duration spent at/above flow, y=flow
+df<-data.frame(x=100/length(flow$Q)*1:length(flow$Q),y=flow$Q)
+
+#Plot
+ggplot() + geom_line(data=df, aes(x = x, y = y)) +
+  scale_y_log10() + 
+  labs(y="Discharge (cfs)",
+       x="Percentage of Time Flow = or Less Than (%)", 
+       title="Flow Duration Curve") +
+  theme_bw()
+
+
+# now make flow duration table
+x <- df$x
+y <- df$y
+
+#Table with the flow duration
+
+percentage=c(5,10,20,30,40,50,60,70,80,90,95,99)
+
+quants <- c(y[which.min(abs(x - 5))],y[which.min(abs(x - 10))],y[which.min(abs(x - 20))],y[which.min(abs(x - 30))],y[which.min(abs(x - 40))],y[which.min(abs(x - 50))],y[which.min(abs(x - 60))],y[which.min(abs(x - 70))],y[which.min(abs(x - 80))],y[which.min(abs(x - 90))],y[which.min(abs(x - 95))],y[which.min(abs(x - 99))])
+
+duration.dataframe<-cbind(percentage,quants)
+
+colnames(duration.dataframe)=c("%","Discharge(cfs)")
+
+duration.dataframe
+
+library(lmom)
+library(lubridate)
+
+#Create a time series object to be used next
+# rearrange flow by date
+flow_by_date <- flow %>% arrange(date)
+         
+discharges.ts=ts(flow_by_date$Q, frequency=365.25, start=c(1951,1,1))
+length(discharges.ts)
+plot(discharges.ts,main="Flow time series", ylab="Discharges(cfs)")
+
+#Creating a daily index for all data range
+data<-data_frame(date=seq(as.Date("1951-01-01"),as.Date("2015-12-31"), length.out =length(discharges.ts)), amount=discharges.ts)
+
+#Grouping maximum average daily discharge for each year
+max.by.year<-data %>% group_by(year=floor_date(date, "year")) %>% summarize(amount=max(amount))
+
+#Plotting the maximum discharges by year
+plot(max.by.year,type="l",ylab="Discharge (cfs)",main="Maximum Daily Average Discharge")
+
+#Recording the maximum discharges by year and removing N.A. values
+maximas<-max.by.year$amount
+maximas<-maximas[!is.na(maximas)]
+
+#Sorting maxima by decreasing order
+sorted.maximas<- sort(maximas, decreasing = TRUE)
+
+#Computing the empirical probabilities
+p<-(c(1:length(sorted.maximas)))/(length(sorted.maximas)+1)
+
+#Computing the recurrence time
+tr<-1/p
+
+#Estimating the parameters for Gumbel distribution
+fit<-samlmu(maximas)
+para<-pelgum(fit)
+para
+
+#Estimating the parameters for Log Pearson type 3 distribution
+para3<-pelpe3(fit)
+para3
+
+### PLOT
+#Plot cumulative probability x discharges for empirical and fitting distribution
+plot(1-p,sorted.maximas,ylab="discharge (cfs)",xlab="Cumulative probability",main="")
+
+#Log pearson type 3 fitting
+lines(cdfpe3(sorted.maximas,para3),sorted.maximas,col="red")
+
+#Gumbel fitting
+lines(cdfgum(sorted.maximas,para),sorted.maximas,col="blue",lty=2)
+grid()
+#Legend
+legend("topleft", legend=c("LP3", "Gumbel"),
+       col=c("red", "blue"), lty=1:2, cex=1)
+
+#Plotting empirical recurrence time and discharges
+plot(tr,sorted.maximas,xlab="Recurrence Time (years)",ylab="discharge (cfs)",
+     ylim=c(1200,9000),xlim=c(0,80))
+grid()
+
+#Fitting recurrence time employing Gumbel distribution
+y<-c(9000,sorted.maximas)
+gumbel.accum<-cdfgum(y,para)
+fitted.tr<-1/(1-gumbel.accum)
+lines(fitted.tr,y,col="blue",lty=2)
+
+#Fitting recurrence time emplyoing Log Pearson 3 distribution
+lp3.accum<-cdfpe3(y,para3)
+fitted.tr3<-1/(1-lp3.accum)
+lines(fitted.tr3,y,col="red")
+legend("topleft", legend=c("LP3", "Gumbel"),
+       col=c("red", "blue"), lty=1:2, cex=1)
+
+
+```
+
+# RULES FOR FFC R PACKAGE
+
+- 15 year post filter is default (can change it to less)
+- Missing data drops years if more than 7 days missing (non-contiguous)
+- output number of years dropped, and range of years that exist
+- if less than 20 years then peak 10 metrics are provisional 
+- Ted will need to rerun the predicted models for peak flows
+- need to wait until Leo updates calculator
+
+## Resources & Websites {.tabset .tabset-fade .tabset-pills}
+
+### Python FFC
+
+The original python repository where the current up-to-date version of the FF calculator:
+
+ - [FFC On Github](https://github.com/leogoesger/func-flow)
+ 
+### Eflows Website
+
+The [eflows.ucdavis.edu](https://eflows.ucdavis.edu) website uses the python code to generate functional flow metrics. This is the visual "GUI" that many folks are using currently.
+
+ - [eflows.ucdavis.edu](https://eflows.ucdavis.edu)
+
+### R API Wrapper
+
+This is an R package that essentially uses the underlying code from the **eflows website** to calculate FFM in R.
+
+ - [R ffc package](https://github.com/ceff-tech/ffc_api_client)
+
+<br>

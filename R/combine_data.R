@@ -6,7 +6,7 @@
 
 combine_data <- function(){
 
-  if(!fs::file_exists(glue("{here()}/output/ffm_combined_tidy.rda"))){
+  if(!fs::file_exists(glue("{here()}/output/ffm_combined_tidy.fst"))){
     # get paths
     base_data_dir <- glue("{here()}/output/")
     rda_files <- dir(path = base_data_dir, pattern='*.rda$', recursive = T, full.names = T)
@@ -20,14 +20,15 @@ combine_data <- function(){
       mutate(ffc_version=factor(version)) %>% select(-version)
 
     # save out
-    save(df_all, file = glue("{base_data_dir}/ffm_combined_tidy.rda"))
+    #save(df_all, file = glue("{base_data_dir}/ffm_combined_tidy.rda"))
+    write_fst(x = df_all, path = glue("{base_data_dir}/ffm_combined_tidy.fst"), compress = 100)
     return(df_all)
   }
   else{
     print("Already exists!")
-    load(glue("{here::here()}/output/ffm_combined_tidy.rda"))
+    dat <- read_fst(path = glue("{here::here()}/output/ffm_combined_tidy.fst"))
     print("Data loaded into local environment")
-    assign(x = "df_all", value = get("df_all"), envir = .GlobalEnv)
+    assign(x = "df_all", value = dat, envir = .GlobalEnv)
     }
 }
 
