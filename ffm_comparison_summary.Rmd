@@ -18,8 +18,11 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 source("R/packages.R")
-source("R/combine_data.R")
-source("R/plot_summarize.R")
+source("R/data_plot_summarize.R")
+
+# load the data
+basedir <- glue("{here()}/output")
+df_all <- fst::read_fst(glue("{basedir}/ffm_combined_tidy.fst"))
 ```
 
 To better understand how metrics have changed between previous iterations of the Functional Flow Calculator, here are some comparison plots across stream class and metric. 
@@ -62,7 +65,7 @@ source("R/plot_summarize.R")
 # get table for stream class and flow Chx
 # flow chx: "Timing" "Magnitude" "Duration" "Rate of change" "Frequency"
 flow_chx_dt(flow_characteristic="Magnitude") # pass a stream class to the function
-plot_flow_chx(stream_class = "Class-1", flow_characteristic="Magnitude")
+plot_flow_chx(df_all, stream_class = "Class-1", flow_characteristic="Magnitude")
 
 ```
 
@@ -81,8 +84,8 @@ Changed:
  - **Peak_5**
 
 ```{r, echo=F, eval=T, message=FALSE, warning=FALSE}
-combine_data()
-flow_chx_dt(flow_characteristic = "Magnitude")
+
+flow_chx_dt(data = df_all, flow_characteristic = "Magnitude")
 
 ```
 
@@ -92,7 +95,7 @@ If we look at Stream Class-1 for Magnitude and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-1", "Magnitude")
+plot_flow_chx(data = df_all, "Class-1", "Magnitude")
 
 ```
 
@@ -102,7 +105,7 @@ If we look at Stream Class-2 for Magnitude and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-2", "Magnitude")
+plot_flow_chx(df_all, "Class-2", "Magnitude")
 
 ```
 
@@ -112,7 +115,7 @@ If we look at Stream Class-3 for Magnitude and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-3", "Magnitude")
+plot_flow_chx(df_all, "Class-3", "Magnitude")
 
 ```
 
@@ -122,7 +125,7 @@ If we look at Stream Class-4 for Magnitude and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-4", "Magnitude")
+plot_flow_chx(df_all, "Class-4", "Magnitude")
 
 ```
 
@@ -132,7 +135,7 @@ If we look at Stream Class-5 for Magnitude and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-5", "Magnitude")
+plot_flow_chx(df_all, "Class-5", "Magnitude")
 
 ```
 
@@ -142,7 +145,7 @@ If we look at Stream Class-6 for Magnitude and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-6", "Magnitude")
+plot_flow_chx(df_all, "Class-6", "Magnitude")
 
 ```
 
@@ -152,7 +155,7 @@ If we look at Stream Class-7 for Magnitude and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-7", "Magnitude")
+plot_flow_chx(df_all, "Class-7", "Magnitude")
 
 ```
 
@@ -162,7 +165,7 @@ If we look at Stream Class-8 for Magnitude and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-8", "Magnitude")
+plot_flow_chx(df_all, "Class-8", "Magnitude")
 
 ```
 
@@ -172,7 +175,7 @@ If we look at Stream Class-9 for Magnitude and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-9", "Magnitude")
+plot_flow_chx(df_all, "Class-9", "Magnitude")
 
 ```
 
@@ -186,8 +189,8 @@ plot_flow_chx("Class-9", "Magnitude")
 If we look at Timing metrics for all Stream classes, and compare each side by side, we can quickly see there are **NO DIFFERENCES**.
 
 ```{r, echo=F, eval=T, message=FALSE, warning=FALSE}
-combine_data()
-flow_chx_dt(flow_characteristic = "Timing")
+
+flow_chx_dt(data = df_all, flow_characteristic = "Timing")
 
 ```
 
@@ -203,8 +206,8 @@ Changed:
  - **Peak_Dur_5**
 
 ```{r, echo=F, eval=T, message=FALSE, warning=FALSE}
-combine_data()
-flow_chx_dt(flow_characteristic = "Duration")
+
+flow_chx_dt(data=df_all, flow_characteristic = "Duration")
 
 ```
 
@@ -214,7 +217,7 @@ If we look at Stream Class-1 for Duration and visualize these data (so combine a
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-1", "Duration")
+plot_flow_chx(df_all, "Class-1", "Duration")
 
 ```
 
@@ -224,7 +227,7 @@ If we look at Stream Class-2 for Duration and visualize these data (so combine a
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-2", "Duration")
+plot_flow_chx(df_all, "Class-2", "Duration")
 
 ```
 
@@ -234,7 +237,7 @@ If we look at Stream Class-3 for Duration and visualize these data (so combine a
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-3", "Duration")
+plot_flow_chx(df_all, "Class-3", "Duration")
 
 ```
 
@@ -244,7 +247,7 @@ If we look at Stream Class-4 for Duration and visualize these data (so combine a
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-4", "Duration")
+plot_flow_chx(df_all, "Class-4", "Duration")
 
 ```
 
@@ -254,7 +257,7 @@ If we look at Stream Class-5 for Duration and visualize these data (so combine a
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-5", "Duration")
+plot_flow_chx(df_all, "Class-5", "Duration")
 
 ```
 
@@ -264,7 +267,7 @@ If we look at Stream Class-6 for Duration and visualize these data (so combine a
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-6", "Duration")
+plot_flow_chx(df_all, "Class-6", "Duration")
 
 ```
 
@@ -274,7 +277,7 @@ If we look at Stream Class-7 for Duration and visualize these data (so combine a
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-7", "Duration")
+plot_flow_chx(df_all, "Class-7", "Duration")
 
 ```
 
@@ -284,7 +287,7 @@ If we look at Stream Class-8 for Duration and visualize these data (so combine a
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-8", "Duration")
+plot_flow_chx(df_all, "Class-8", "Duration")
 
 ```
 
@@ -294,7 +297,7 @@ If we look at Stream Class-9 for Duration and visualize these data (so combine a
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-9", "Duration")
+plot_flow_chx(df_all, "Class-9", "Duration")
 
 ```
 
@@ -308,8 +311,8 @@ plot_flow_chx("Class-9", "Duration")
 If we look at Rate of change metrics for all Stream classes, and compare each side by side, we can quickly see there are **NO DIFFERENCES**.
 
 ```{r, echo=F, eval=T, message=FALSE, warning=FALSE}
-combine_data()
-flow_chx_dt(flow_characteristic = "Rate of change")
+
+flow_chx_dt(df_all, flow_characteristic = "Rate of change")
 
 ```
 
@@ -325,8 +328,8 @@ Changed:
  - **Peak_Fre_5**
 
 ```{r, echo=F, eval=T, message=FALSE, warning=FALSE}
-combine_data()
-flow_chx_dt(flow_characteristic = "Frequency")
+
+flow_chx_dt(df_all, flow_characteristic = "Frequency")
 
 ```
 
@@ -336,7 +339,7 @@ If we look at Stream Class-1 for Frequency and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-1", "Frequency")
+plot_flow_chx(df_all, "Class-1", "Frequency")
 
 ```
 
@@ -346,7 +349,7 @@ If we look at Stream Class-2 for Frequency and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-2", "Frequency")
+plot_flow_chx(df_all, "Class-2", "Frequency")
 
 ```
 
@@ -356,7 +359,7 @@ If we look at Stream Class-3 for Frequency and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-3", "Frequency")
+plot_flow_chx(df_all, "Class-3", "Frequency")
 
 ```
 
@@ -366,7 +369,7 @@ If we look at Stream Class-4 for Frequency and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-4", "Frequency")
+plot_flow_chx(df_all, "Class-4", "Frequency")
 
 ```
 
@@ -376,7 +379,7 @@ If we look at Stream Class-5 for Frequency and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-5", "Frequency")
+plot_flow_chx(df_all, "Class-5", "Frequency")
 
 ```
 
@@ -386,7 +389,7 @@ If we look at Stream Class-6 for Frequency and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-6", "Frequency")
+plot_flow_chx(df_all, "Class-6", "Frequency")
 
 ```
 
@@ -396,7 +399,7 @@ If we look at Stream Class-7 for Frequency and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-7", "Frequency")
+plot_flow_chx(df_all, "Class-7", "Frequency")
 
 ```
 
@@ -406,7 +409,7 @@ If we look at Stream Class-8 for Frequency and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-8", "Frequency")
+plot_flow_chx(df_all, "Class-8", "Frequency")
 
 ```
 
@@ -416,7 +419,7 @@ If we look at Stream Class-9 for Frequency and visualize these data (so combine 
 
 ```{r, echo=F, eval=T, fig.retina=2, message=FALSE, warning=FALSE}
 
-plot_flow_chx("Class-9", "Frequency")
+plot_flow_chx(df_all, "Class-9", "Frequency")
 
 ```
 

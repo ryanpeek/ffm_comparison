@@ -25,7 +25,8 @@ data_merge <- function(ffc_v1, ffc_v2){
       mutate(ffc_version=factor(version), .after=filename) %>% select(-version)
 
     # save out
-    write_rds(df_all, file = glue("{base_data_dir}/ffm_combined_tidy.rds"))
+    write_rds(x = df_all, compress = "gz",
+              file = glue("{base_data_dir}ffm_combined_tidy.rds"))
     write_fst(x = df_all, path = glue("{base_data_dir}/ffm_combined_tidy.fst"), compress = 100)
     return(df_all)
   }
