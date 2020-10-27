@@ -10,7 +10,7 @@ data_raw_combine <- function(ffc_version) {
   # set basefolder name
   basedir <- fs::dir_ls(path = "data/",
                         type = "directory",
-                        regexp = glue::glue("{ffc_version}*"))
+                        regexp = glue::glue("{ffc_version}"))
 
   # list all files
   csv_files <- dir(path = basedir, pattern='*.csv$', recursive = T)
