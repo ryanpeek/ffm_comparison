@@ -49,7 +49,7 @@ plot_flow_chx <- function(data, stream_class, flow_characteristic, save=FALSE){
 
   if(save){
     ggsave(plot = gg1,
-           filename = glue("{here()}/output/{stream_class}_compare_boxplot.png"),
+           filename = glue("{here()}/figures/{stream_class}_{flow_chx}_compare_boxplot.png"),
            width = 8, height = 7, units = "in", dpi=300)
     #dev.off()
   }
