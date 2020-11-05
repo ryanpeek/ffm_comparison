@@ -6,25 +6,23 @@
 #devtools::install_github('ceff-tech/ffc_api_client/ffcAPIClient')
 library(ffcAPIClient)
 
-library(usethis)
+#library(usethis)
 #edit_r_environ() # and add API token
 
 # set/get the token for using the FFC
 ffctoken <- set_token(Sys.getenv("EFLOWS", ""))
 
+#ffcAPIClient::clean_account(ffctoken)
+
 # Supporting Packages -----------------------------------------------------
+
 options(tidyverse.quiet = TRUE)
 library(conflicted)
 library(tidyverse)
 library(glue)
 conflict_prefer("filter", "dplyr")
-#conflict_prefer("pivot_longer", "tidyr")
-#library(sf)
 library(tictoc) # timing stuff
-library(furrr) # parallel processing for mapping functions/loops (purrr)
-#library(tidylog) # good for logging what happens
 options(scipen = 100)
-
 
 # Set up the R6 processor -------------------------------------------------
 
@@ -68,33 +66,17 @@ ffc$predicted_wyt_percentiles
 
 gages <- tibble("name"=c("MFF", "Merced", "NFA"), id=c(11394500, 11264500, 11427000))
 
-# write a function to pull the data
-ffc_iter <- function(id, startDate, save=TRUE){
-  if(save==TRUE){
-    # start ffc processor
-    ffc <- FFCProcessor$new()
-    # setup
-    ffc$gage_start_date = startDate
-    ffc$set_up(gage_id = id, token=ffctoken)
-    ffc$run()
-    # write out
-    write_csv(ffc$alteration, file = glue::glue("output/ffc/{id}_alteration.csv"))
-    write_csv(ffc$ffc_results, file = glue::glue("output/ffc/{id}_ffc_results.csv"))
-    write_csv(ffc$ffc_percentiles, file=glue::glue("output/ffc/{id}_ffc_percentiles.csv"))
-    write_csv(ffc$predicted_percentiles, file=glue::glue("output/ffc/{id}_predicted_percentiles.csv"))
-  } else {
-    return(ffc)
-  }
-}
+source("R/f_iterate_ffc.R")
 
-# wrap in possibly to permit error catching
-# see helpful post here: https://aosmith.rbind.io/2020/08/31/handling-errors/
-ffc_possible <- possibly(.f = ffc_iter, otherwise = NA_character_)
+# for altered can start: "1979-10-01"
 
-# iterate
-ffcs <- map(gages$id, ~ffc_possible(.x, startDate = "1979-10-01", save=TRUE)) %>%
+# iterate with purrr::map()
+tic()
+ffcs <- map(gages$id, ~ffc_possible(.x, startDate = "", save=TRUE)) %>%
   # add names to list
   set_names(., nm=gages$name)
+toc()
+# 66.22
 
 # see names
 names(ffcs)
@@ -105,20 +87,53 @@ ffcs %>% keep(is.na(.))
 
 # Read in and Collapse ----------------------------------------------------
 
-datatype="ffc_percentiles"
+datatype="ffc_results"
 fdir="output/ffc/"
 
-# need function to read in and collapse different ffc outputs
-ffc_collapse <- function(datatype, fdir){
-  datatype = datatype
-  csv_list = fs::dir_ls(path = fdir, regexp = datatype)
-  csv_names = fs::path_file(csv_list) %>% fs::path_ext_remove()
-  gage_ids = str_extract(csv_names, '([0-9])+')
-  # read in all
-  df <- purrr::map(csv_list, ~read_csv(.x)) %>%
-    map2_df(gage_ids, ~mutate(.x,gageid=.y))
-
-}
+source("R/f_ffc_collapse.R")
 
 # IT WORKS!
-tst <- ffc_collapse(datatype, fdir)
+df_ffc <- ffc_collapse(datatype, fdir)
+
+# pivot longer
+tst <- df_ffc %>% filter(gageid==11394500) %>%
+  pivot_longer(cols=!c(Year,gageid),
+               names_to="ffm",
+               values_to="value") %>%
+  rename(year=Year) %>%
+  mutate(ffc_version="api",
+         year=as.character(year))
+
+
+# Compare gages with v2020 ---------------------------------------------------
+
+
+df_all <- read_rds("output/ffm_combined_tidy.rds")
+
+df_filt <- df_all %>%
+  filter(gage_id == 11394500, ffc_version=="2020") %>%
+  select(ffc_version, gage_id:flow_metric_name)
+# what is year range?
+range(df_filt$year)
+unique(df_filt$ffm)
+
+
+# match year range with tst
+tst <- tst %>% filter(year %in% df_filt$year, !ffm %in% c("Peak_Tim_10", "Peak_Tim_5", "Peak_Tim_2"))
+range(tst$year)
+unique(tst$ffm)
+
+
+# combine
+df_combine <- bind_rows(df_filt, tst)
+
+# plot
+ggplot() +
+  geom_boxplot(data=df_combine,
+               aes(x = ffm, y=value, fill=ffc_version, group=ffm),
+               alpha=0.9, show.legend = FALSE, outlier.alpha = 0.3)+
+  coord_flip() + labs(x="", y="Value", subtitle = glue("FF Metrics")) +
+  scale_fill_brewer(type = "qual") +
+  theme_classic() +
+  facet_wrap(~ffc_version)
+

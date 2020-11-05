@@ -17,8 +17,8 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-source("R/packages.R")
-source("R/data_plot_summarize.R")
+source("R/version_comparison_packages.R")
+source("R/f_data_plot_summarize.R")
 
 # load the data
 basedir <- glue("{here()}/output")
@@ -47,20 +47,20 @@ To better understand how metrics have changed between previous iterations of the
  
 ```{r workflow, eval=F, echo=T}
 # PACKAGES
-source("R/packages.R")
+source("R/version_comparison_packages.R")
 
 # FUNCTION TO GET DATA FROM RAW SOURCE AND TIDY
-source("R/get_data.R")
+source("R/f_get_data.R")
 
 # use returndata=TRUE to return raw tidied data to global environment
 get_data(2019, returndata = FALSE)
 get_data(2020, returndata = FALSE)
 
 # FUNCTION TO COMBINE VERSIONS (2019 and 2020) INTO SINGLE DATAFRAME
-source("R/combine_data.R") # automatically loads data
+source("R/f_combine_data.R") # automatically loads data
 
 # PLOT/SUMMARIZE
-source("R/plot_summarize.R")
+source("R/f_plot_summarize.R")
 
 # get table for stream class and flow Chx
 # flow chx: "Timing" "Magnitude" "Duration" "Rate of change" "Frequency"
