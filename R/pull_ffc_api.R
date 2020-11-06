@@ -62,6 +62,29 @@ ffc$predicted_percentiles
 ffc$predicted_wyt_percentiles
 
 
+# Pass Timeseries ---------------------------------------------------------
+
+
+# pass your own timeseries with "timeseries"
+tst <- dataRetrieval::readNWISdv(11264500,parameterCd = "00060")
+tst <- tst %>% dataRetrieval::renameNWISColumns() %>% janitor::clean_names()
+
+ffc <- FFCProcessor$new()
+ffc$date_field <- "date"
+ffc$flow_field <- "flow"
+ffc$date_format_string <- "%Y-%m-%d"
+ffc$set_up(token = ffctoken,
+           timeseries=tst, comid=21609533)
+
+ffc$run()
+
+# get comid if you don't know it for a gage
+gage <- ffcAPIClient::USGSGage$new()
+gage$id <- 11264500
+gage$get_data()
+gage$get_comid()
+(comid <- gage$comid)
+
 # Iteration ---------------------------------------------------------------
 
 gages <- tibble("name"=c("MFF", "Merced", "NFA"), id=c(11394500, 11264500, 11427000))
@@ -136,4 +159,4 @@ ggplot() +
   scale_fill_brewer(type = "qual") +
   theme_classic() +
   facet_wrap(~ffc_version)
-
+ggsave(filename = "figures/comparison_mffeather_11394500.png", width = 11, height = 8, dpi=300)
