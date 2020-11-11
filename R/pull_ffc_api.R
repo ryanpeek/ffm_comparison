@@ -47,6 +47,9 @@ ffc$gage_start_date = "1979-10-01" # start_date and end_date are passed straight
 #ffc$warn_years_data
 #ffc$warn_years_data = 10 # default is 15
 
+
+# Run Steps ---------------------------------------------------------------
+
 # RUN SETUP
 ffc$set_up(gage_id=11264500, token = ffctoken)
 
@@ -60,6 +63,12 @@ ffc$ffc_percentiles
 ffc$ffc_results
 ffc$predicted_percentiles
 ffc$predicted_wyt_percentiles
+
+# steps
+ffc$step_one_functional_flow_results(gage_id = 11264500, token = ffctoken, output_folder = "output/ffc")
+ffc$step_two_explore_ecological_flow_criteria()
+ffc$step_three_assess_alteration()
+
 
 
 # Pass Timeseries ---------------------------------------------------------
@@ -76,6 +85,7 @@ ffc$date_format_string <- "%Y-%m-%d"
 ffc$set_up(token = ffctoken,
            timeseries=tst, comid=21609533)
 
+# run
 ffc$run()
 
 # get comid if you don't know it for a gage

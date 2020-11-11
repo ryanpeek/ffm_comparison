@@ -10,6 +10,8 @@ ffc_iter <- function(id, startDate, save=TRUE){
     ffc <- FFCProcessor$new()
     # setup
     ffc$gage_start_date = startDate
+    ffc$warn_years_data = 12
+    ffc$fail_years_data = 10
     ffc$set_up(gage_id = id, token=ffctoken)
     ffc$run()
     # write out
