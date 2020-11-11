@@ -85,18 +85,19 @@ save(ffcs, file = "output/ffcs_usgs_altered_raw.rda")
 # Follow Up Test for Missing ----------------------------------------------
 
 # see this one 10264675
-
-tst <-miss_gages[1]
+# tst <-miss_gages[1]
+# 10339419
+tst <- 10339419
 
 # RUN SETUP
 fftst <- FFCProcessor$new()  # make a new object we can use to run the commands
 fftst$warn_years_data
-fftst$fail_years_data = 7
+fftst$fail_years_data = 9
 fftst$fail_years_data
 fftst$gage_start_date = "1979-10-01" # start_date and end_date are passed straight through to readNWISdv - "" means "retrieve all". Override values should be of the form YYYY-MM-DD
 fftst$gage_start_date
 fftst$timeseries_max_missing_days
-fftst$set_up(gage_id=tst, token = ffctoken)
+fftst$set_up(gage_id=tst, comid = 8933772, token = ffctoken)
 
 # then run
 fftst$run()
@@ -104,20 +105,29 @@ fftst$run()
 
 # Read in and Collapse ----------------------------------------------------
 
-datatype="ffc_results"
+# set the data type:
+datatype="alteration"
+
+# options:
+## alteration
+## doh_data
+## ffc_percentiles
+## ffc_results
+## predicted_percentiles
+## predicted_wyt_percentiles
+
+# set directory where raw csvs live
 fdir="output/ffc/"
 
-source("R/f_ffc_collapse.R")
-
-# IT WORKS!
+# run it!
 df_ffc <- ffc_collapse(datatype, fdir)
 
-# pivot longer
-df_long <- df_ffc %>%
-  #filter(gageid==11394500) %>%
-  pivot_longer(cols=!c(Year,gageid),
-               names_to="ffm",
-               values_to="value") %>%
-  rename(year=Year) %>%
-  mutate(ffc_version="api",
-         year=as.character(year))
+# pivot longer for ffc_results
+# df_long <- df_ffc %>%
+#   #filter(gageid==11394500) %>%
+#   pivot_longer(cols=!c(Year,gageid),
+#                names_to="ffm",
+#                values_to="value") %>%
+#   rename(year=Year) %>%
+#   mutate(ffc_version="api",
+#          year=as.character(year))
