@@ -8,6 +8,8 @@ library(ffcAPIClient)
 
 #library(usethis)
 #edit_r_environ() # and add API token
+# EFLOWS="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJzdE5hbWUiOiJSeWFuIiwibGFzdE5hbWUiOiJQZWVrIiwiZW1haWwiOiJyeWFuLmEucGVla0BnbWFpbC5jb20iLCJyb2xlIjoiVVNFUiIsImlhdCI6MTYwNDQ1MDE3M30.oi9HIYNRq0x9mmfTd9k0A_iTcIB6NxFzX_ZAQTu05C4"
+
 
 # set/get the token for using the FFC
 ffctoken <- set_token(Sys.getenv("EFLOWS", ""))
