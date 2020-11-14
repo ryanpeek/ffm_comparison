@@ -92,7 +92,7 @@ ffc$run()
 
 # get comid if you don't know it for a gage
 gage <- ffcAPIClient::USGSGage$new()
-gage$id <- 11264500
+gage$id <- 11264500 # 10339419
 gage$get_data()
 gage$get_comid()
 (comid <- gage$comid)

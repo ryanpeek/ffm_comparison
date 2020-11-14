@@ -2,17 +2,17 @@
 # list includes 814 gages
 # stored here: https://github.com/ryanpeek/ffm_comparison/blob/main/data/usgs_gages_altered.rds
 
-
 # Libraries ---------------------------------------------------------------
 
 # main ffc package
+#devtools::install_github('ceff-tech/ffc_api_client/ffcAPIClient')
 library(ffcAPIClient)
 
 # set/get the token for using the FFC
 ffctoken <- set_token(Sys.getenv("EFLOWS", ""))
 
 # clean up
-ffcAPIClient::clean_account(ffctoken)
+#ffcAPIClient::clean_account(ffctoken)
 
 # packages
 options(tidyverse.quiet = TRUE)
@@ -56,16 +56,22 @@ st_date <- "1979-10-01"
 
 # RUN! --------------------------------------------------------------------
 
-# chunk 100 at a time:
-g100 <- gages %>% slice(1:100)
+# chunk a set number at a time:
+# gages2 <- gages %>% slice(1:100)
+
+# or use all
+gages2 <- gages
 
 tic() # start time
-ffcs <- gages %>%
-  pluck("ID") %>%
+ffcs <- gages2 %>%
+  pluck("ID") %>% # pull just ID column
   map(., ~ffc_possible(.x, startDate = st_date, save=TRUE)) %>%
   # add names to list
-  set_names(x = ., nm=gages$ID)
+  set_names(x = ., nm=gages2$ID)
 toc() # end time
+# for 800+ =
+## 4164 s (79 min)
+## 3946 s (66 min)
 
 # see names
 names(ffcs)
@@ -77,17 +83,23 @@ ffcs %>% keep(is.na(.)) %>% length()
 miss_gages<-ffcs %>% keep(is.na(.)) %>% names()
 
 # save out missing
-write_lines(miss_gages, file = "output/ffcs_usgs_altered_missing_data.txt")
+write_lines(miss_gages, file = "output/usgs_ffcs_gages_alt_missing_data.txt")
 
 # save out FFC
-save(ffcs, file = "output/ffcs_usgs_altered_raw.rda")
+save(ffcs, file = glue("output/usgs_ffcs_altered_raw_run_{Sys.Date()}.rda"))
 
 # Follow Up Test for Missing ----------------------------------------------
 
-# see this one 10264675
-# tst <-miss_gages[1]
-# 10339419
-tst <- 10339419
+# test
+(tst <-miss_gages[1]) # 10259540
+
+# get comid if you don't know it for a gage
+gage <- ffcAPIClient::USGSGage$new()
+gage$id <- tst
+gage$get_data()
+gage$get_comid()
+(comid <- gage$comid)
+
 
 # RUN SETUP
 fftst <- FFCProcessor$new()  # make a new object we can use to run the commands
@@ -97,24 +109,31 @@ fftst$fail_years_data
 fftst$gage_start_date = "1979-10-01" # start_date and end_date are passed straight through to readNWISdv - "" means "retrieve all". Override values should be of the form YYYY-MM-DD
 fftst$gage_start_date
 fftst$timeseries_max_missing_days
-fftst$set_up(gage_id=tst, comid = 8933772, token = ffctoken)
+
+# if you have comid, add via original usgs_alt dataset
+fftst$set_up(gage_id=tst, comid = 22680750, token = ffctoken)
 
 # then run
 fftst$run()
 
 
-# Read in and Collapse ----------------------------------------------------
+# Import Raw Data Tidy and Write Out ------------------------------------------
+
+(rawfile <- fs::dir_ls(path="output", type = "file", regexp = "usgs_ffcs_altered_raw_run*"))
+# extract just run date:
+runDate <- str_extract(rawfile, pattern = "[0-9-]+")
+
+# load data
+load(rawfile)
 
 # set the data type:
-datatype="alteration"
+datatype="predicted_wyt_percentiles"
 
 # options:
 ## alteration
-## doh_data
 ## ffc_percentiles
 ## ffc_results
 ## predicted_percentiles
-## predicted_wyt_percentiles
 
 # set directory where raw csvs live
 fdir="output/ffc/"
@@ -122,12 +141,22 @@ fdir="output/ffc/"
 # run it!
 df_ffc <- ffc_collapse(datatype, fdir)
 
-# pivot longer for ffc_results
-# df_long <- df_ffc %>%
-#   #filter(gageid==11394500) %>%
-#   pivot_longer(cols=!c(Year,gageid),
-#                names_to="ffm",
-#                values_to="value") %>%
-#   rename(year=Year) %>%
-#   mutate(ffc_version="api",
-#          year=as.character(year))
+# view how many records
+df_ffc %>% distinct(gageid) %>% count()
+df_ffc %>% group_by(gageid) %>% tally() #%>% filter(n>23) %>% View() # view
+
+# save it
+write_csv(df_ffc, file = glue("output/usgs_alt_{datatype}_run_{runDate}.csv"))
+write_rds(df_ffc, file = glue("output/usgs_alt_{datatype}_run_{runDate}.rds"))
+
+# FOR ffc_results: Pivot Longer
+df_ffc_long <- df_ffc %>%
+  pivot_longer(cols=!c(Year,gageid),
+               names_to="ffm",
+               values_to="value") %>%
+  rename(year=Year) %>%
+  mutate(ffc_version="v1.1_api",
+         year=as.character(year))
+
+write_csv(df_ffc_long, file = glue("output/usgs_alt_{datatype}_run_{runDate}.csv"))
+save(df_ffc_long, file = glue("output/usgs_alt_{datatype}_run_{runDate}.rda"))

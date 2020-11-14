@@ -1,5 +1,5 @@
 metric,status_code,status,alteration_type,median_in_iqr,comid
-DS_Dur_WS,0,indeterminate,low,FALSE,2806611
+DS_Dur_WS,-1,likely_altered,low,FALSE,2806611
 DS_Tim,1,likely_unaltered,none_found,FALSE,2806611
 DS_Mag_50,-1,likely_altered,high,FALSE,2806611
 DS_Mag_90,1,likely_unaltered,none_found,FALSE,2806611
