@@ -1,5 +1,6 @@
 library(fs)
 library(purrr)
+library(stringr)
 
 # need function to read in and collapse different ffc outputs
 ffc_collapse <- function(datatype, fdir){
