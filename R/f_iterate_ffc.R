@@ -2,10 +2,12 @@ library(readr)
 library(ffcAPIClient)
 library(purrr)
 library(glue)
+library(fs)
 
 # write a function to pull the data
-ffc_iter <- function(id, startDate, save=TRUE){
+ffc_iter <- function(id, startDate, ffctoken=ffctoken, save=TRUE){
   if(save==TRUE){
+    dir_create("output/fc")
     # start ffc processor
     ffc <- FFCProcessor$new()
     # setup

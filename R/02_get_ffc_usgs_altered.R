@@ -1,6 +1,4 @@
 # run FFC for altered USGS gage list
-# list includes 814 gages
-# stored here: https://github.com/ryanpeek/ffm_comparison/blob/main/data/usgs_gages_altered.rds
 
 # Libraries ---------------------------------------------------------------
 
@@ -12,7 +10,7 @@ library(ffcAPIClient)
 ffctoken <- set_token(Sys.getenv("EFLOWS", ""))
 
 # clean up
-#ffcAPIClient::clean_account(ffctoken)
+ffcAPIClient::clean_account(ffctoken)
 
 # packages
 options(tidyverse.quiet = TRUE)
@@ -22,7 +20,7 @@ conflict_prefer("filter", "dplyr")
 library(glue) # good for pasting things together
 library(tictoc) # timing stuff
 options(scipen = 100) # to print full string instead of sci notation
-
+library(sf)
 
 # Load Functions ----------------------------------------------------------
 
@@ -35,8 +33,9 @@ source("R/f_iterate_ffc.R")
 source("R/f_ffc_collapse.R")
 
 
-# Import Gage List --------------------------------------------------------
+# Import ORIG Gage List ------------------------------------------------
 
+# the orig list
 usgs_alt <- read_rds("data/usgs_gages_altered.rds") # n=814
 
 # check for duplicates (look at distinct records):
@@ -48,6 +47,15 @@ gages <- usgs_alt %>% select(ID, NHDV2_COMID) %>%
   mutate(ID=gsub("T", "", ID))
 
 
+# Import Expanded USGS Gage List ------------------------------------------
+
+# the updated expanded list:
+usgs_alt2 <- read_rds("output/usgs_alt_gages_expanded_indexed_all.rds")
+
+# make a simple list of gage_id & comid
+gages2 <- usgs_alt2 %>% select(site_id, comid)
+
+
 # Setup Iteration ---------------------------------------------------------
 
 # set start date to start WY 1980
@@ -57,21 +65,22 @@ st_date <- "1979-10-01"
 # RUN! --------------------------------------------------------------------
 
 # chunk a set number at a time:
-# gages2 <- gages %>% slice(1:100)
-
-# or use all
-gages2 <- gages
+gagelist <- gages2 %>% st_drop_geometry() #%>% slice(1:10)
 
 tic() # start time
-ffcs <- gages2 %>%
-  pluck("ID") %>% # pull just ID column
+ffcs <- gagelist %>%
+  pluck("site_id") %>% # pull just ID column
   map(., ~ffc_possible(.x, startDate = st_date, save=TRUE)) %>%
   # add names to list
-  set_names(x = ., nm=gages2$ID)
+  set_names(x = ., nm=gagelist$site_id)
 toc() # end time
+
 # for 800+ =
 ## 4164 s (79 min)
 ## 3946 s (66 min)
+
+# for 1876 gages=
+## 6965 s (116 min)
 
 # see names
 names(ffcs)
@@ -91,7 +100,7 @@ save(ffcs, file = glue("output/usgs_ffcs_altered_raw_run_{Sys.Date()}.rda"))
 # Follow Up Test for Missing ----------------------------------------------
 
 # test
-(tst <-miss_gages[1]) # 10259540
+(tst <-miss_gages[100])
 
 # get comid if you don't know it for a gage
 gage <- ffcAPIClient::USGSGage$new()
@@ -103,25 +112,27 @@ gage$get_comid()
 
 # RUN SETUP
 fftst <- FFCProcessor$new()  # make a new object we can use to run the commands
-fftst$warn_years_data
 fftst$fail_years_data = 9
 fftst$fail_years_data
 fftst$gage_start_date = "1979-10-01" # start_date and end_date are passed straight through to readNWISdv - "" means "retrieve all". Override values should be of the form YYYY-MM-DD
 fftst$gage_start_date
-fftst$timeseries_max_missing_days
 
 # if you have comid, add via original usgs_alt dataset
-fftst$set_up(gage_id=tst, comid = 22680750, token = ffctoken)
-
+fftst$set_up(gage_id=tst, comid = comid, token = ffctoken)
+fftst$set_up(gage_id="09423350", token = ffctoken)
 # then run
 fftst$run()
-
+fftst$step_one_functional_flow_results(gage_id = "09423350", token = ffctoken, )
 
 # Import Raw Data Tidy and Write Out ------------------------------------------
 
 (rawfile <- fs::dir_ls(path="output", type = "file", regexp = "usgs_ffcs_altered_raw_run*"))
-# extract just run date:
+
+# extract just the run dates:
 runDate <- str_extract(rawfile, pattern = "[0-9-]+")
+
+# take most recent date
+
 
 # load data
 load(rawfile)

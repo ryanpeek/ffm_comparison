@@ -136,5 +136,17 @@ usgs_alt_indexed <- left_join(usgs_alt_gages_coms, flowline_indexes, by=c("site_
 # how many unique comids? # 1774
 usgs_alt_indexed %>% distinct(COMID) %>% count()
 
+
+# add years
+usgs_alt_indexed <- usgs_alt_indexed %>%
+  mutate(total_yrs = year(date_end)-year(date_begin),
+         total_post1980 = year(date_end)-1980)
+
 ## SAVE IT!
 write_rds(usgs_alt_indexed, file="output/usgs_alt_gages_expanded_indexed_all.rds")
+
+# how many are post 1980?
+usgs_alt_indexed %>% filter(total_post1980>10) %>% count()
+
+# map
+usgs_alt_indexed %>% filter(total_post1980>10) %>% mapview(zcol="total_post1980")
