@@ -3,11 +3,12 @@ library(ffcAPIClient)
 library(purrr)
 library(glue)
 library(fs)
+library(here)
 
 # write a function to pull the data
 ffc_iter <- function(id, startDate, ffctoken=ffctoken, save=TRUE){
   if(save==TRUE){
-    dir_create("output/fc")
+    dir_create(glue("{here()}/output/ffc"))
     # start ffc processor
     ffc <- FFCProcessor$new()
     # setup
@@ -17,10 +18,10 @@ ffc_iter <- function(id, startDate, ffctoken=ffctoken, save=TRUE){
     ffc$set_up(gage_id = id, token=ffctoken)
     ffc$run()
     # write out
-    write_csv(ffc$alteration, file = glue::glue("output/ffc/{id}_alteration.csv"))
-    write_csv(ffc$ffc_results, file = glue::glue("output/ffc/{id}_ffc_results.csv"))
-    write_csv(ffc$ffc_percentiles, file=glue::glue("output/ffc/{id}_ffc_percentiles.csv"))
-    write_csv(ffc$predicted_percentiles, file=glue::glue("output/ffc/{id}_predicted_percentiles.csv"))
+    write_csv(ffc$alteration, file = glue::glue("{here()}/output/ffc/{id}_alteration.csv"))
+    write_csv(ffc$ffc_results, file = glue::glue("{here()}/output/ffc/{id}_ffc_results.csv"))
+    write_csv(ffc$ffc_percentiles, file=glue::glue("{here()}/output/ffc/{id}_ffc_percentiles.csv"))
+    write_csv(ffc$predicted_percentiles, file=glue::glue("{here()}/output/ffc/{id}_predicted_percentiles.csv"))
     #save(ffc, file = glue::glue("output/ffc/{id}_rdata_ffc.rda"))
   } else {
     # start ffc processor
