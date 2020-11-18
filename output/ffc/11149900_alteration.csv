@@ -11,7 +11,7 @@ SP_Dur,1,likely_unaltered,none_found,TRUE,8210533
 SP_Mag,1,likely_unaltered,none_found,FALSE,8210533
 SP_Tim,1,likely_unaltered,none_found,TRUE,8210533
 Wet_BFL_Dur,1,likely_unaltered,none_found,TRUE,8210533
-Wet_BFL_Mag_10,1,likely_unaltered,none_found,FALSE,8210533
+Wet_BFL_Mag_10,1,likely_unaltered,none_found,TRUE,8210533
 Wet_BFL_Mag_50,1,likely_unaltered,none_found,TRUE,8210533
 Wet_Tim,1,likely_unaltered,none_found,TRUE,8210533
 Peak_Dur_10,1,likely_unaltered,none_found,TRUE,8210533
@@ -20,6 +20,6 @@ Peak_Dur_5,1,likely_unaltered,none_found,FALSE,8210533
 Peak_10,1,likely_unaltered,none_found,TRUE,8210533
 Peak_2,1,likely_unaltered,none_found,TRUE,8210533
 Peak_5,1,likely_unaltered,none_found,TRUE,8210533
-Peak_Fre_10,1,likely_unaltered,none_found,FALSE,8210533
+Peak_Fre_10,1,likely_unaltered,none_found,TRUE,8210533
 Peak_Fre_2,1,likely_unaltered,none_found,TRUE,8210533
 Peak_Fre_5,1,likely_unaltered,none_found,TRUE,8210533
