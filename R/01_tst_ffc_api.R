@@ -14,7 +14,7 @@ library(ffcAPIClient)
 # set/get the token for using the FFC
 ffctoken <- set_token(Sys.getenv("EFLOWS", ""))
 
-#ffcAPIClient::clean_account(ffctoken)
+ffcAPIClient::clean_account(ffctoken)
 
 # Supporting Packages -----------------------------------------------------
 
@@ -107,7 +107,7 @@ source("R/f_iterate_ffc.R")
 
 # iterate with purrr::map()
 tic()
-ffcs <- map(gages$id, ~ffc_possible(.x, startDate = "", save=TRUE)) %>%
+ffcs <- map(gages$id, ~ffc_possible(.x, startDate = "", ffctoken=ffctoken, save=FALSE)) %>%
   # add names to list
   set_names(., nm=gages$name)
 toc()

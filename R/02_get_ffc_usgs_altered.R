@@ -65,12 +65,12 @@ st_date <- "1979-10-01"
 # RUN! --------------------------------------------------------------------
 
 # chunk a set number at a time:
-gagelist <- gages2 %>% st_drop_geometry() #%>% slice(1:10)
+gagelist <- gages2 %>% st_drop_geometry() %>% slice(1:5)
 
 tic() # start time
 ffcs <- gagelist %>%
   pluck("site_id") %>% # pull just ID column
-  map(., ~ffc_possible(.x, startDate = st_date, save=TRUE)) %>%
+  map(., ~ffc_possible(.x, startDate = st_date, ffctoken=ffctoken, save=FALSE)) %>%
   # add names to list
   set_names(x = ., nm=gagelist$site_id)
 toc() # end time

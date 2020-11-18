@@ -47,3 +47,5 @@ vignettes/*.pdf
 # ignore raw data (unzipped)
 /data/2020-10-07_CA_ffm_obs/
 /data/2019-07-27_CA_ffm_obs/
+
+/output/ffc/
