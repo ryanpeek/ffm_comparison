@@ -3,7 +3,7 @@
 flow_chx_dt <- function(data, flow_characteristic){
   # get paths
   #base_data_dir <- glue("{here()}/output/")
-  #df_all <- read_rds(path = glue("{base_data_dir}/ffm_combined_tidy.rds"))
+  #df_all <- read_rds(path = glue("{base_data_dir}/ffm_ref_combined_tidy.rds"))
   df_all<-data
 
   # filter to timing metrics only
@@ -25,7 +25,7 @@ plot_flow_chx <- function(data, stream_class, flow_characteristic, save=FALSE){
   df_all <- data
   # get paths
   #base_data_dir <- glue("{here()}/output/")
-  #df_all <- read_rds(path = glue("{base_data_dir}/ffm_combined_tidy.rds"))
+  #df_all <- read_rds(path = glue("{base_data_dir}/ffm_ref_combined_tidy.rds"))
 
   # filter to timing metrics only
   #unique(df_all$flow_characteristic) # "Timing"         "Magnitude"      "Duration"       "Rate of change" "Frequency"

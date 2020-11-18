@@ -6,7 +6,7 @@
 ##' @export
 data_merge <- function(ffc_v1, ffc_v2){
 
-  if(!fs::file_exists(glue("{here()}/output/ffm_combined_tidy.fst"))){
+  if(!fs::file_exists(glue("{here()}/output/ffm_ref_combined_tidy.fst"))){
     # get paths
     base_data_dir <- glue("{here()}/output/")
 
@@ -26,13 +26,13 @@ data_merge <- function(ffc_v1, ffc_v2){
 
     # save out
     write_rds(x = df_all, compress = "gz",
-              file = glue("{base_data_dir}ffm_combined_tidy.rds"))
-    write_fst(x = df_all, path = glue("{base_data_dir}/ffm_combined_tidy.fst"), compress = 100)
+              file = glue("{base_data_dir}ffm_ref_combined_tidy.rds"))
+    write_fst(x = df_all, path = glue("{base_data_dir}/ffm_ref_combined_tidy.fst"), compress = 100)
     return(df_all)
   }
   else{
     print("Already exists!")
-    df_all <- read_rds(file = glue("{here::here()}/output/ffm_combined_tidy.rds"))
+    df_all <- read_rds(file = glue("{here::here()}/output/ffm_ref_combined_tidy.rds"))
     print("Data loaded into local environment")
     return(df_all)
   }
