@@ -14,211 +14,203 @@ library(lubridate)
 library(sf)
 
 
-# Load Data ---------------------------------------------------------------
+# Load ALT GAGES ---------------------------------------------------------------
 
-# vector of all gages that returned NA
-miss_gages <- read_lines("output/usgs_ffcs_gages_alt_missing_data.txt")
-miss_gages_df <- tibble(ID=miss_gages)
-
-# join back with usgs dataset?
-gages_alt <- read_rds("data/usgs_gages_altered.rds")
-# make ID col without T
-gages_alt <- gages_alt %>%
+# this is the altered list from Sam et al (n=814)
+gages_alt <- read_rds("data/usgs_gages_alt_ffcs.rds") %>%
+  # make ID col without T
   mutate(ID=gsub("T", "", ID))
 
-miss_gages_df <- inner_join(miss_gages_df, gages_alt, by="ID")
-
 # make spatial
-miss_gages_df <- miss_gages_df %>%
+gages_alt_sf <- gages_alt %>%
   sf::st_as_sf(coords=c("LONGITUDE","LATITUDE"), crs=4269, remove=FALSE)
 
-# get list of ref gages
-# ref_gages_df <- read_rds("output/ffm_combined_tidy.rds")
+# Load REF GAGES ---------------------------------------------------------------
+
+# get list of ref gages from Noelle's outputs (n=223)
+# ref_gages_df <- read_rds("output/ffm_ref_combined_tidy.rds")
 # ref_gages <- ref_gages_df %>% distinct(gage_id) %>% pull()
-# write_lines(ref_gages, file = "output/ffcs_usgs_reference_gages.txt")
-ref_gages <- read_lines("output/usgs_ffcs_gages_ref.txt")
+# write_lines(ref_gages, file = "data/usgs_gages_ref_ffcs.txt")
+ref_gages <- read_lines("data/usgs_gages_ref_ffcs.txt") # just a vector
 
-# gages2 data
+
+# Load GAGES2 Data --------------------------------------------------------
+
+# gages2 data (n=9322)
 load("data/gages2AttrPlus.rda")
-gages2 <- gages2AttrPlus %>% filter(STATE=="CA")
+gages2 <- gages2AttrPlus %>% filter(STATE=="CA") # only CA=810
 
-# how many ref in gages2?
+# how many ref in gages2? (n=191)
 gages2 %>% filter(STAID %in% ref_gages) %>% count()
 
-# how many alt in gages2?
+# how many alt in gages2? (n=517)
 gages2 %>% filter(STAID %in% gages_alt$ID) %>% count()
 
+# Get All USGS CA Gages ---------------------------------------------------
 
-# Get USGS Metadata -------------------------------------------------------
+# RUN ONCE: part of {dataRetrieval} package
 
-# RUN ONCE
+paramCd <- "00060" # discharge (cfs) (temperature=00010, stage=00065)
+dataInterval <- "dv" # daily interval, feed via "service" argument
+site_type <- "ST" # only streams (instead of ST-CA=stream canal, etc: https://maps.waterdata.usgs.gov/mapper/help/sitetype.html)
 
-# paramCd <- "00060" # discharge (cfs) (temperature=00010, stage=00065)
-# dataInterval <- "dv" # daily interval, feed via "service" argument
-#
-# # get all raw FLOW gages
-# ca_usgs <- dataRetrieval::whatNWISdata(stateCd="CA", service=dataInterval, parameterCd=paramCd, statCd="00003")
-#
-# # filter to CA dv
-# ca_usgs <- ca_usgs %>% # filter to distinct, "dv"=daily values, and "00003"
-#   filter(parm_cd == paramCd,
-#          data_type_cd %in% c("dv"),
-#          stat_cd == "00003")
-#
-# # this yields n=2391
-#
-# # see how many total usgs gages
-# ca_usgs %>% distinct(site_no, .keep_all = TRUE) %>% count() # n=2381
-#
-# # check stats
-# table(ca_usgs$data_type_cd)
-# table(ca_usgs$stat_cd)
-#
-# # so where are duplicates?
-# ca_usgs %>% group_by(site_no) %>% tally() %>% filter(n>1)
-#
-# # most of these all appear to be same gages, but record is split in two. A few are duplicates
-#
-# # TIDY
-# ca_tidy <- ca_usgs %>%
-#   # rename cols
-#   dplyr::rename(interval=data_type_cd, lat = dec_lat_va, lon=dec_long_va,
-#                 huc8=huc_cd, site_id=site_no, date_begin=begin_date,
-#                 date_end=end_date, datum=dec_coord_datum_cd, elev_m=alt_va) %>%
-#   # drop cols
-#   select(-(loc_web_ds:access_cd)) %>%
-#   # filter missing vals
-#   dplyr::filter(!is.na(lon)) %>% # this is a pond out of Mt Shasta
-#   sf::st_as_sf(coords=c("lon","lat"), crs=4269, remove=FALSE)
-#
-# # save out
-# #write_rds(ca_tidy, file = "output/usgs_ca_all_dv_gages.rds")
 
+# get all raw FLOW gages
+ca_usgs <- dataRetrieval::whatNWISdata(stateCd="CA", service=dataInterval, parameterCd=paramCd, statCd="00003", siteType=site_type) # n=2366
+
+# double check parameters are clean
+table(ca_usgs$site_tp_cd) # some extra ST-DCH and ST-CA types
+table(ca_usgs$parm_cd)
+table(ca_usgs$stat_cd)
+
+# filter out any STREAM CANALS or STREAM DITCHES
+ca_usgs <- ca_usgs %>%
+  filter(site_tp_cd==site_type) # n=2322
+
+# see how many total UNIQUE usgs gages
+ca_usgs %>% distinct(site_no, .keep_all = TRUE) %>% count() # n=2313
+
+# so where are duplicates?
+ca_usgs %>% group_by(site_no) %>% tally() %>% filter(n>1)
+
+# most of these all appear to be same gages, but record is split in two. A few are duplicates
+# 09429210 split across two records, both valid: ts_id=5428, 217607, keep both
+# 09429500 has 3 records, 2 are duplicates: ts_id=213060, 5437 dups, keep larger number
+# 11218700 ts_id=213628, 9319 dups, keep larger number
+# 11253500 ts_id=214005, 9442 dups, keep larger number
+# 11363930 ts_id=217015, 10127 dups, keep larger number
+# 11374305 ts_id=217513, 10191 dups, keep larger
+# 11429500 ts_id=225039, 10865 dups, keep larger
+
+# TIDY and cleanup
+ca_dv <- ca_usgs %>%
+  # rename cols
+  dplyr::rename(interval=data_type_cd, lat = dec_lat_va, lon=dec_long_va,
+                huc8=huc_cd, site_id=site_no, date_begin=begin_date,
+                date_end=end_date, datum=dec_coord_datum_cd, elev_m=alt_va) %>%
+  # drop unneeded cols
+  select(-(loc_web_ds:access_cd)) %>%
+  # filter out the duplicates from above:
+  filter(!ts_id %in% c(5437, 9319, 9442, 10127, 10191, 10865)) %>%
+  # make spatial
+  sf::st_as_sf(coords=c("lon","lat"), crs=4269, remove=FALSE)
+
+# how many distinct? (n=2313)
+ca_dv %>% distinct(site_id) %>% count()
+
+# save out
+write_rds(ca_dv, file = "data/usgs_ca_all_dv_gages.rds")
+
+# Load All USGS Daily Flow Gages in CA ------------------------------------
+
+ca_dv <- read_rds("data/usgs_ca_all_dv_gages.rds")
 
 # CROSS CHECK USGS W GAGES2 & REF/ALT -----------------------------------------------
 
-# how many ref in usgs?
-ca_tidy %>% filter(site_id %in% ref_gages) %>%
+# how many ref in this usgs DV list?
+ca_dv %>% filter(site_id %in% ref_gages) %>%
   distinct(site_id) %>% count()
 # only 221 in this list from USGS list?
 
 # what 2 are not in this list?
-tibble(ref_id=ref_gages) %>% filter(!ref_id %in% ca_tidy$site_id)
-# 11299000=NEW MELONES DAM!? 1927 to present?
+tibble(ref_id=ref_gages) %>% filter(!ref_id %in% ca_dv$site_id)
+# 11299000=NEW MELONES DAM 1927 to present?
 # 11446220=AMERICAN RIVER BLW FOLSOM, only continuous for TEMPERATURE?
 
-# how many alt are NOT in usgs?
-tibble(alt_id=miss_gages) %>% filter(!alt_id %in% ca_tidy$site_id)
+# how many alt are NOT in usgs dv dataset?
+gages_alt %>% filter(!ID %in% ca_dv$site_id)
 # only one 10293050=E WALKER RV BLW SWEETWATER CK NR BRIDGEPORT (only 2011-2015 avail)
 
 # how many gages2 in usgs set?
-ca_tidy %>% filter(site_id %in% gages2$STAID) %>%
+ca_dv %>% filter(site_id %in% gages2$STAID) %>%
   distinct(site_id) %>% count()
-# only 805...what's missing?
-gages2 %>% filter(!STAID %in% ca_tidy$site_id) %>% pull(STAID)
+# only 805 match (of 810)...what's missing?
+
+# LOOK AT MISSING GAGES FROM GAGES2 (not in CA DV gages)
+gages2 %>% filter(!STAID %in% ca_dv$site_id) %>% pull(STAID)
+
+# looking these up on USGS-NWIS website, found following:
 # "10339400" = MARTIS C NR TRUCKEE, Peak streamflow and field measurements only
 # "11161300" = CARBONERA C A SCOTTS VALLEY CA, Peak streamflow and field measurements only
 # "11206800" = MARBLE FORK KAWEAH R AB TOKOPAH FALLS, Peak streamflow and field measurements only
 # "11383730" = SACRAMENTO R A VINA BRIDGE NR VINA, Peak streamflow and field measurements only
 # "11383800" = SACRAMENTO R NR HAMILTON CITY CA, Peak streamflow and field measurements, daily continuous data only for sediment and temperature
 
-
 # GET EXPANDED LIST -------------------------------------------------------
 
-## GET GAGE LIST OF ALT TO RUN IN ADDITION TO ORIGINAL ALT LIST
-usgs_alt <- read_rds("data/usgs_gages_altered.rds") # n=814
+# now take what we know and add the other USGS DV gages that weren't included
+# in the altered list.
+
+# USING original list: gages_alt
 
 # make a simple list of gage_id & comid
-gages <- usgs_alt %>% select(ID, NHDV2_COMID) %>%
-  # fix the "T" and remove
-  mutate(ID=gsub("T", "", ID))
+alt_gages <- gages_alt %>% select(ID, NHDV2_COMID)
 
 # make list of additional gages to run
-alt_gages_rev <- ca_tidy %>%
+alt_gages_ca_dv <- ca_dv %>%
   # drop orig n=814 alt list
-  filter(!site_id %in% gages$ID) %>%
+  filter(!site_id %in% alt_gages$ID) %>%
   # drop ref gages (n=223)
   filter(!site_id %in% ref_gages)
 
-# n=1386 (not including orig n=814)
-# n=2169 (including any gages from n=814 that are in this list)
+# n=1314 (not including orig n=814)
+# distinct? (n=1311), so some duplicates
+alt_gages_ca_dv %>% distinct(site_id) %>% tally()
 
-# save this out
-write_rds(alt_gages_rev, file = "output/usgs_alt_gages_expanded_full.rds")
-write_csv(alt_gages_rev, file = "output/usgs_alt_gages_expanded_full.csv")
+# make list of ALL alt gages (drop ref gages)
+alt_gages_all <- ca_dv %>%
+  # drop ref gages (n=223)
+  filter(!site_id %in% ref_gages)
+# n=2095 (including any gages from n=814 that are in this list)
+# n=2092 (distinct)
 
-# save trimmed list (excluding 814)
-write_rds(alt_gages_rev, file = "output/usgs_alt_gages_expanded_trim.rds")
-write_csv(alt_gages_rev, file = "output/usgs_alt_gages_expanded_trim.csv")
-
-mapview(alt_gages_rev)
-
-# Map Together ------------------------------------------------------------
-
-ca_tidy <- read_rds("output/usgs_ca_all_dv_gages.rds")
-
-# bind ref_gages with ca_tidy
-ca_ref <- filter(ca_tidy, site_id %in% ref_gages)
-
-mapview(ca_tidy, col.regions="gray", cex=0.5, layer.name="ALL USGS") +
-  mapview(miss_gages_df, col.regions="maroon", layer.name="Miss Altered") +
-  mapview(ca_ref, col.regions="skyblue", layer.name="Ref")
+#mapview(alt_gages_all)
 
 
 # Make some Plots ---------------------------------------------------------
 
-miss_gages_df2 <- left_join(miss_gages_df, st_drop_geometry(ca_tidy), by=c("ID"="site_id")) %>%
-  # drop dups using ts_id: 10865 and 10127
-  filter(!ts_id %in% c(10865, 10127),
-         !is.na(date_begin))
-
-# check for dups
-miss_gages_df2[duplicated(miss_gages_df2$ID),]
+# check for dups (n=3)
+alt_gages_all[duplicated(alt_gages_all$site_id),]
 
 ## add a years duration col
-miss_gages_df2 <- miss_gages_df2 %>%
+alt_gages_all <- alt_gages_all %>%
   mutate(total_yrs = year(date_end)-year(date_begin),
          total_post1980 = year(date_end)-1980)
 
-# PLOT ALL MISSING ALT GAGES
+# save expanded list (including 814)
+write_rds(alt_gages_all, file = "output/usgs_alt_gages_expanded.rds")
+write_csv(alt_gages_all, file = "output/usgs_alt_gages_expanded.csv")
+
+# how many have >=10 yrs data post 1980?
+alt_gages_10yrs <- alt_gages_all %>% filter(total_post1980>9 & total_yrs>9) # n=935
+mapview(alt_gages_10yrs, zcol="total_post1980")
+
+# save the trimmed list:
+write_rds(alt_gages_10yrs, file = "output/usgs_alt_gages_10yrs_dv.rds")
+write_csv(alt_gages_10yrs, file = "output/usgs_alt_gages_10yrs_dv.csv")
+
+
+# PLOT ALL ALT GAGES
 ggplot() +
-  geom_linerange(data=miss_gages_df2 %>% filter(total_post1980>0),
-                 aes(x=ID, ymin=date_begin, ymax=date_end, color=total_post1980),
-                 show.legend = T, size=1) +
+  geom_linerange(data=alt_gages_10yrs,
+                 aes(x=site_id, ymin=date_begin, ymax=date_end, color=total_post1980),
+                 show.legend = T, size=0.25) +
+
   geom_hline(yintercept = ymd("1979-10-01"), color="maroon", lty=2, lwd=1.2)+
   coord_flip() +
   scale_color_viridis_c("Total Years\n post-1980")+
   ggdark::dark_theme_classic() +
-  labs(x="", y="", subtitle="FFC Altered Gages that didn't run (due to missing data/gaps), but have data post 1980 (n=133)",
-       caption="From original altered list (n=814)")
+  labs(x="", y="", subtitle=glue("USGS Altered Gages with 9+ years data post-1980 (n={nrow(alt_gages_10yrs)})"),
+       caption="data: USGS {dataRetrieval} package")
 
-#save
-ggsave(filename = "figures/ffc_altered_missing_but_data_post1980.png",
+# save
+ggsave(filename = "figures/usgs_altered_10plusyrs_post1980.png",
        width = 10, height = 8, dpi = 300, units = "in")
 
 # find gages with less than 10 years of data
-miss_10 <- miss_gages_df2 %>%
+miss_10 <- alt_gages_all %>%
   filter(total_yrs<10 |
-         total_post1980<10)
+         total_post1980<10) # n=1160
+nrow(miss_10)
 
 #mapview(miss_10, zcol="total_yrs")
-
-miss_g10 <- miss_gages_df2 %>% filter(total_yrs>9 & total_post1980>9)
-
-#mapview(miss_g10, zcol="total_post1980")
-
-# replot only gages with 10 or more years after 1980
-ggplot() +
-  geom_linerange(data=miss_g10,
-                 aes(x=ID, ymin=date_begin, ymax=date_end, color=total_post1980),
-                 show.legend = T, size=1) +
-  #geom_text(data=miss_g10, aes(x=ID, label=ID, y=date_begin), size=2.5) +
-  geom_hline(yintercept = ymd("1979-10-01"), color="maroon")+
-  coord_flip() +
-  #ylim(c(ymd("1979-10-01"),ymd("2020-10-01")))+
-  scale_color_viridis_c("Total Years\n post-1980")+
-  ggdark::dark_theme_classic() +
-  labs(x="", y="", subtitle="FFC Altered Gages that didn't run with 9> years data after 1980",
-       caption="From original altered list (n=814)")
-
-ggsave(filename = "figures/ffc_altered_gages_w+10yrs_post1980.png", width = 11, height = 8.5, units = "in", dpi=300)
