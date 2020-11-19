@@ -32,72 +32,61 @@ source("R/f_iterate_ffc.R")
 # this takes these data and saves them all into a single file/s
 source("R/f_ffc_collapse.R")
 
-
-# Import ORIG Gage List ------------------------------------------------
-
-# the orig list
-usgs_alt <- read_rds("data/usgs_gages_altered.rds") # n=814
-
-# check for duplicates (look at distinct records):
-usgs_alt %>% group_by(ID) %>% n_distinct()
-
-# make a simple list of gage_id & comid
-gages <- usgs_alt %>% select(ID, NHDV2_COMID) %>%
-  # fix the "T" and remove
-  mutate(ID=gsub("T", "", ID))
-
-
 # Import Expanded USGS Gage List ------------------------------------------
 
-# the updated expanded list:
-usgs_alt2 <- read_rds("output/usgs_alt_gages_expanded_indexed_all.rds")
+# the updated expanded list w gages w +10 yrs data
+usgs_alt <- read_rds("output/usgs_alt_gages_10yrs_dv.rds") # n=935
 
-# make a simple list of gage_id & comid
-gages2 <- usgs_alt2 %>% select(site_id, comid)
-
+# make a simple list of gage_id & gageIDName
+gages <- usgs_alt %>%
+  mutate(site_id_name = paste0("T",site_id)) %>%
+  select(site_id, site_id_name)
 
 # Setup Iteration ---------------------------------------------------------
 
 # set start date to start WY 1980
 st_date <- "1979-10-01"
 
-
 # RUN! --------------------------------------------------------------------
 
-# chunk a set number at a time:
-gagelist <- gages2 %>% st_drop_geometry() %>% slice(1:5)
+# chunk a set number at a time (and drop sf)
+gagelist <- gages %>% st_drop_geometry() %>% slice(1:5)
 
 tic() # start time
 ffcs <- gagelist %>%
   pluck("site_id") %>% # pull just ID column
-  map(., ~ffc_possible(.x, startDate = st_date, ffctoken=ffctoken, save=FALSE)) %>%
+  map(., ~ffc_possible(.x, startDate = st_date, ffctoken=ffctoken, dirToSave="output/ffc_run2", save=FALSE)) %>%
   # add names to list
-  set_names(x = ., nm=gagelist$site_id)
+  set_names(x = ., nm=gagelist$site_id_name)
 toc() # end time
 
 # for 800+ =
-## 4164 s (79 min)
 ## 3946 s (66 min)
 
-# for 1876 gages=
-## 6965 s (116 min)
+# for 935 gages (748 with data!)
+## 7047 s (117 min)
 
 # see names
 names(ffcs)
 
+# a timestamp: format(Sys.time(), "%Y-%m-%d_%H%M")
+(file_ts <- format(Sys.time(), "%Y%m%d_%H%M"))
+
 # identify missing:
-ffcs %>% keep(is.na(.)) %>% length()
+ffcs %>% keep(is.na(.)) %>% length() # missing 187
 
 # make a list of gages
 miss_gages<-ffcs %>% keep(is.na(.)) %>% names()
 
 # save out missing
-write_lines(miss_gages, file = "output/usgs_ffcs_gages_alt_missing_data.txt")
+write_lines(miss_gages, file = "output/usgs_ffm_alt_missing_gages_{file_ts}.txt")
 
-# save out FFC
-save(ffcs, file = glue("output/usgs_ffcs_altered_raw_run_{Sys.Date()}.rda"))
+# save out FFC R6 object
+save(ffcs, file = glue("output/usgs_ffm_alt_full_output_v2_{file_ts}.rda"))
 
-# Follow Up Test for Missing ----------------------------------------------
+# Follow Up for Missing ----------------------------------------------
+
+# just look at missing gages here?
 
 # test
 (tst <-miss_gages[100])
@@ -109,18 +98,15 @@ gage$get_data()
 gage$get_comid()
 (comid <- gage$comid)
 
-
 # RUN SETUP
 fftst <- FFCProcessor$new()  # make a new object we can use to run the commands
 fftst$fail_years_data = 9
-fftst$fail_years_data
-fftst$gage_start_date = "1979-10-01" # start_date and end_date are passed straight through to readNWISdv - "" means "retrieve all". Override values should be of the form YYYY-MM-DD
-fftst$gage_start_date
+fftst$gage_start_date = "1979-10-01"
 
 # if you have comid, add via original usgs_alt dataset
 fftst$set_up(gage_id=tst, comid = comid, token = ffctoken)
-fftst$set_up(gage_id="09423350", token = ffctoken)
+#fftst$set_up(gage_id="09423350", token = ffctoken)
+
 # then run
 fftst$run()
-fftst$step_one_functional_flow_results(gage_id = "09423350", token = ffctoken, )
 

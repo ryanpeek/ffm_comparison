@@ -19,7 +19,7 @@ library(nhdplusTools)
 
 # Data --------------------------------------------------------------------
 
-usgs_alt_gages <- read_rds("output/usgs_alt_gages_expanded_full.rds")
+usgs_alt_gages <- read_rds("output/usgs_alt_gages_expanded.rds")
 
 # GET COMIDS --------------------------------------------------------------
 

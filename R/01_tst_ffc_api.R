@@ -53,7 +53,7 @@ ffc$gage_start_date = "1979-10-01" # start_date and end_date are passed straight
 # Run Steps ---------------------------------------------------------------
 
 # RUN SETUP
-ffc$set_up(gage_id=11264500, token = ffctoken)
+ffc$set_up(gage_id="09423350", token = ffctoken)
 
 # then run
 ffc$run()

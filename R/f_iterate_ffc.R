@@ -10,6 +10,7 @@ ffc_iter <- function(id, startDate, ffctoken=ffctoken, dirToSave="output/ffc", s
 
   # set save dir
   outDir <- glue::glue("{here()}/{dirToSave}")
+  dir_create(glue("{outDir}"))
 
   # set special parameters for this run of the FFC
   ffc <- FFCProcessor$new()
@@ -17,18 +18,18 @@ ffc_iter <- function(id, startDate, ffctoken=ffctoken, dirToSave="output/ffc", s
   ffc$warn_years_data = 12
   ffc$fail_years_data = 10
   # run the FFCProcessor's setup code, then run the FFC itself
-  ffc$set_up(gage_id = id, token=ffctoken)
-  capture.output(ffc$run(), file = glue::glue("{outDir}/{id}_logfile.txt"), append = TRUE)
+  ffc$set_up(gage_id = as.character(id), token=ffctoken)
+  ffc$run()
 
   if(save==TRUE){
     dir_create(glue("{outDir}"))
     # write out
     write_csv(ffc$alteration, file = glue::glue("{outDir}/{id}_alteration.csv"))
-    write_csv(ffc$ffc_results, file = glue::glue("{{outDir}/{id}_ffc_results.csv"))
+    write_csv(ffc$ffc_results, file = glue::glue("{outDir}/{id}_ffc_results.csv"))
     write_csv(ffc$ffc_percentiles, file=glue::glue("{outDir}/{id}_ffc_percentiles.csv"))
     write_csv(ffc$predicted_percentiles, file=glue::glue("{outDir}/{id}_predicted_percentiles.csv"))
   } else {
-    return(ffc)
+    return(ffc) # this returns raw ffc R6 for each gage
   }
 }
 
