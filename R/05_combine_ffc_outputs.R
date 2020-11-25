@@ -17,15 +17,18 @@ source("R/f_ffc_collapse.R")
 
 # Setup Directory ---------------------------------------------------------
 
+# get type
+type <- "ref"
+
 # get dir
-ffc_dir <- "output/ffc_run/"
+ffc_dir <- glue("output/ffc_run_{type}/")
 ffc_files <- dir_ls(ffc_dir, type = "file", regexp = "*.csv")
-ffc_missing <- dir_ls("output", regexp = "usgs_ffm_alt_missing_gages*")
+ffc_missing <- dir_ls("output", regexp = glue("usgs_ffm_{type}_missing_gages*"))
 # extract just date
 (runDate <- stringr::str_extract(ffc_missing, pattern = "[0-9]+"))
 
 # look at modification time:
-#fileRun <- file_info(ffc_files[1])[[5]] %>% floor_date(unit = "day")
+file_info(ffc_files[1])[[5]] %>% floor_date(unit = "day")
 
 # create output location:
 fs::dir_create("output/ffc_combined")
@@ -42,8 +45,8 @@ df_ffc %>% distinct(gageid) %>% count()
 df_ffc %>% group_by(gageid) %>% tally() #%>% filter(n>23) %>% View() # view
 
 # save it
-write_csv(df_ffc, file = glue("output/ffc_combined/usgs_alt_{datatype}_run_{runDate}.csv"))
-write_rds(df_ffc, file = glue("output/ffc_combined/usgs_alt_{datatype}_run_{runDate}.rds"), compress = "gz")
+write_csv(df_ffc, file = glue("output/ffc_combined/usgs_{type}_{datatype}_run_{runDate}.csv"))
+write_rds(df_ffc, file = glue("output/ffc_combined/usgs_{type}_{datatype}_run_{runDate}.rds"), compress = "gz")
 
 # Combine FFC: alteration -------------------------------------------------
 
@@ -57,8 +60,8 @@ df_ffc %>% distinct(gageid) %>% count()
 df_ffc %>% group_by(gageid) %>% tally() #%>% filter(n>23) %>% View() # view
 
 # save it
-write_csv(df_ffc, file = glue("output/ffc_combined/usgs_alt_{datatype}_run_{runDate}.csv"))
-write_rds(df_ffc, file = glue("output/ffc_combined/usgs_alt_{datatype}_run_{runDate}.rds"), compress = "gz")
+write_csv(df_ffc, file = glue("output/ffc_combined/usgs_{type}_{datatype}_run_{runDate}.csv"))
+write_rds(df_ffc, file = glue("output/ffc_combined/usgs_{type}_{datatype}_run_{runDate}.rds"), compress = "gz")
 
 # Combine FFC: ffc_percentiles --------------------------------------------
 
@@ -72,8 +75,8 @@ df_ffc %>% distinct(gageid) %>% count()
 df_ffc %>% group_by(gageid) %>% tally()
 
 # save it
-write_csv(df_ffc, file = glue("output/ffc_combined/usgs_alt_{datatype}_run_{runDate}.csv"))
-write_rds(df_ffc, file = glue("output/ffc_combined/usgs_alt_{datatype}_run_{runDate}.rds"), compress = "gz")
+write_csv(df_ffc, file = glue("output/ffc_combined/usgs_{type}_{datatype}_run_{runDate}.csv"))
+write_rds(df_ffc, file = glue("output/ffc_combined/usgs_{type}_{datatype}_run_{runDate}.rds"), compress = "gz")
 
 # Combine FFC: ffc_results ------------------------------------------------
 
@@ -87,8 +90,8 @@ df_ffc %>% distinct(gageid) %>% count()
 df_ffc %>% group_by(gageid) %>% tally() #%>% View()
 
 # save it
-write_csv(df_ffc, file = glue("output/ffc_combined/usgs_alt_{datatype}_run_{runDate}.csv"))
-write_rds(df_ffc, file = glue("output/ffc_combined/usgs_alt_{datatype}_run_{runDate}.rds"), compress = "gz")
+write_csv(df_ffc, file = glue("output/ffc_combined/usgs_{type}_{datatype}_run_{runDate}.csv"))
+write_rds(df_ffc, file = glue("output/ffc_combined/usgs_{type}_{datatype}_run_{runDate}.rds"), compress = "gz")
 
 # FOR ffc_results: Pivot Longer
 df_ffc_long <- df_ffc %>%
@@ -100,7 +103,7 @@ df_ffc_long <- df_ffc %>%
   filter(!is.na(value))
 
 # save it
-write_csv(df_ffc_long, file = glue("output/ffc_combined/usgs_alt_{datatype}_long_run_{runDate}.csv"))
-write_rds(df_ffc_long, file = glue("output/ffc_combined/usgs_alt_{datatype}_long_run_{runDate}.rds"), compress = "gz")
+write_csv(df_ffc_long, file = glue("output/ffc_combined/usgs_{type}_{datatype}_long_run_{runDate}.csv"))
+write_rds(df_ffc_long, file = glue("output/ffc_combined/usgs_{type}_{datatype}_long_run_{runDate}.rds"), compress = "gz")
 
 

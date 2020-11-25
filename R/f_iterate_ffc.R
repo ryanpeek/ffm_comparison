@@ -6,11 +6,12 @@ library(fs)
 library(here)
 
 # write a function to pull the data
-ffc_iter <- function(id, startDate, ffctoken=ffctoken, dirToSave="output/ffc", save=TRUE){
+ffc_iter <- function(id, startDate, ffctoken=ffctoken, dirToSave="output/ffc", save=TRUE, comid=""){
 
   # set save dir
   outDir <- glue::glue("{here()}/{dirToSave}")
   dir_create(glue("{outDir}"))
+  comid <- comid
 
   # set special parameters for this run of the FFC
   ffc <- FFCProcessor$new()
@@ -18,7 +19,7 @@ ffc_iter <- function(id, startDate, ffctoken=ffctoken, dirToSave="output/ffc", s
   ffc$warn_years_data = 12
   ffc$fail_years_data = 10
   # run the FFCProcessor's setup code, then run the FFC itself
-  ffc$set_up(gage_id = as.character(id), token=ffctoken)
+  ffc$set_up(gage_id = as.character(id), token=ffctoken, comid=comid)
   ffc$run()
 
   if(save==TRUE){
