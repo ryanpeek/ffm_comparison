@@ -31,6 +31,22 @@ source("R/f_iterate_ffc.R")
 # this takes these data and saves them all into a single file/s
 source("R/f_ffc_collapse.R")
 
+
+# Import Original REFERENCE GAGE DATA AND LIST ----------------------------
+
+# original ref METRICS from observed data
+ref_gages_df <- read_rds("output/ffm_ref_combined_tidy.rds") %>%
+  filter(ffc_version=="2020")
+
+# get range of years
+gageyrs <- ref_gages_df %>% group_by(gage_id) %>%
+  summarize(minY=min(year),
+            maxY=max(year))
+
+# original raw data from ref observed (see here: https://github.com/leogoesger/func-flow/blob/master/CA_timeseries_reference_only/data.csv), but only has 75 gages?
+ref_data <- read_csv("data/z_usgs_ref_flowdata_75_gages.csv")
+
+
 # Import Expanded USGS Gage List ------------------------------------------
 
 # the updated expanded list w gages w +10 yrs data
@@ -40,6 +56,22 @@ usgs_ref <- read_rds("output/usgs_ref_gages_list_comids.rds")
 gages <- usgs_ref %>%
   mutate(site_id_name = paste0("T",site_id)) %>%
   select(site_id, site_id_name, comid)
+
+
+
+# RUN WITH OWN DATA -------------------------------------------------------
+
+ffcAPIClient::evaluate_alteration(
+  timeseries_df = your_df,
+  token = "your_token",
+  plot_output_folder = "C:/Users/youruser/Documents/Timeseries_Alteration",
+  comid=yoursegmentcomid) # REQUIRED OR specify lat/lon
+# additional arguments:
+# longitude = ,
+# latitude = ,
+# plot_results = TRUE, # default is TRUE
+# plot_output_folder = , # where to save things
+# date_format_string = "") # to specify a custom date format, default is YYYY-MM-DD)
 
 # Setup Iteration ---------------------------------------------------------
 
