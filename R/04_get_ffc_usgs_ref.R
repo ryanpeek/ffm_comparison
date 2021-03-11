@@ -45,7 +45,7 @@ gageyrs <- ref_gages_df %>% group_by(gage_id) %>%
 
 # original raw data from ref observed (see here: https://github.com/leogoesger/func-flow/blob/master/CA_timeseries_reference_only/data.csv), but only has 75 gages?
 ref_data <- read_csv("data/z_usgs_ref_flowdata_75_gages.csv")
-
+#see parse_date_time2
 
 # Import Expanded USGS Gage List ------------------------------------------
 
